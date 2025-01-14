@@ -1,0 +1,16 @@
+* Requirements
+- GPS
+- Raspberry Pi am Fahrrad (2 Stück)
+- Rennen zu einem Punkt
+- Display welcher Platz man im Rennen ist
+
+* Architecture
+- Push modell
+- Multiple rest apis
+- On connect sends register with ip to static default ip
+- Server sends updates to all registered ips
+- Every Server tracks time etc for itself
+- If server is not reachable n amount of times it is deregistered and will not receive updates
+- Always try to register new server
+- Drop Coordinates to sqlite
+- query sqlite if needed
