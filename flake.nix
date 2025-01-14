@@ -22,8 +22,6 @@
         packages = [
           (pkgs.python312.withPackages pythonPackages)
           pkgs.ruff
-          pkgs.qt5.full
-          pkgs.qt5.wrapQtAppsHook
         ];
       };
     };
