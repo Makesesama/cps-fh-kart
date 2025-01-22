@@ -15,6 +15,8 @@
 
           pyqt5
           pyserial
+          msgpack
+          msgspec
         ];
     in
     {

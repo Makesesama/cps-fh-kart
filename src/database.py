@@ -1,7 +1,9 @@
 import sqlite3
 import uuid
+from datetime import datetime
 
 from .player import Player
+from .payload import Payload
 
 
 class Database:
@@ -22,16 +24,46 @@ class Database:
         db_player = cursor.execute(
             "SELECT id, me FROM players WHERE me=TRUE"
         ).fetchone()
-        if len(db_player) > 0:
+        if db_player is not None:
             (id, me) = db_player
             return Player(id, me)
         else:
-            self.create_new_player(uuid.uuid4(), me=True)
+            return self.create_new_player(uuid.uuid4(), me=True)
 
     def create_tables(self):
         cursor = self.__cursor()
-        cursor.execute("CREATE TABLE location_data(id, x, y, created_at, player_id)")
-        cursor.execute("CREATE TABLE players(id, active, me)")
+        cursor.execute(
+            "CREATE TABLE IF NOT EXISTS location_data(id TEXT PRIMARY KEY, x REAL, y REAL, created_at TEXT, player_id TEXT)"
+        )
+        cursor.execute(
+            "CREATE TABLE IF NOT EXISTS players(id TEXT PRIMARY KEY, active BOOLEAN, me BOOLEAN)"
+        )
+        cursor.commit()
 
     def create_new_player(self, id, me=False):
-        return Player()
+        player = Player(id, me)
+        self.insert_player(player)
+        return player
+
+    def insert_player(self, player):
+        query = "INSERT INTO players (id, active, me) VALUES (?, ?, ?)"
+        cursor = self.__cursor()
+
+        cursor.execute(query, (str(player.id), player.active, player.me))
+        self.__con.commit()
+
+    def insert_payload(self, payload: Payload):
+        query = "INSERT INTO location_data (id, x, y, created_at, player_id) VALUES (?, ?, ?, ?, ?)"
+        cursor = self.__cursor()
+
+        cursor.execute(
+            query,
+            (
+                str(uuid.uuid4()),
+                payload.gps.x,
+                payload.gps.y,
+                datetime.now(),
+                str(payload.player_id),
+            ),
+        )
+        self.__con.commit()
