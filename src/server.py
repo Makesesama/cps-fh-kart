@@ -26,6 +26,10 @@ class KartClient:
         self.gps_thread.start()
 
     def get_new_points(self, database):
+        """GPS thread.
+
+        Gets new GPS data and puts them into the database.
+        """
         database.post_init()
         while not self.exit:
             gps = GPSMock.create()
@@ -34,6 +38,7 @@ class KartClient:
             time.sleep(5)
 
     def ping(self, sock, ip: str, port: int, gps: GPSMock, database):
+        """Sends a payload to a socket."""
         payload = Payload(database.me, gps)
         database.insert_payload(payload)
         packed = msgspec.msgpack.encode(payload)
@@ -42,6 +47,10 @@ class KartClient:
         return payload
 
     def send(self, ip, port, database):
+        """Sending Thread function.
+
+        Sends packets to a server and sleeps for a while
+        """
         database.post_init()
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # UDP
         logging.info("Sender started")
@@ -61,6 +70,13 @@ class KartServer(KartClient):
         self.receive_thread.start()
 
     def receive(self, ip, port, database):
+        """Receiver Thread function.
+
+        Receives the packets of clients. Saves them into Database and registers
+        the sender in the database. Also sends saved gps to active players every
+        time it receives.
+        """
+
         database.post_init()
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.bind((ip, port))

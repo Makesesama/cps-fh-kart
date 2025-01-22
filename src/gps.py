@@ -7,6 +7,11 @@ from datetime import datetime
 
 
 class GPSMock(msgspec.Struct):
+    """GPS data.
+
+    Can be used to calculate distance between two gps points.
+    """
+
     x: float
     y: float
 
@@ -17,10 +22,13 @@ class GPSMock(msgspec.Struct):
     def create(self):
         return GPSMock(random.uniform(1.2, 123141.1), random.uniform(1.2, 123141.1))
 
-    def log(self):
-        return f"{self.x} - {self.y}"
-
 
 class DBGPS(GPSMock):
+    """GPS data from database.
+
+    Has extra id field to identify duplicates.
+    Has extra created_at field to sort for last gps
+    """
+
     id: uuid.UUID
     created_at: datetime

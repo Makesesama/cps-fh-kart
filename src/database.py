@@ -9,6 +9,11 @@ from .player import Player
 
 
 class Database:
+    """Homebrew database abstraction.
+
+    Connects to sqlite, creates tables and handles all the application data
+    """
+
     __db_path: str
     me: Player
 
@@ -16,6 +21,10 @@ class Database:
         self.__db_path = database_path
 
     def post_init(self):
+        """Initiates DB connection.
+
+        This is needed so all threads can initiate their own db connections.
+        """
         self.__con = sqlite3.connect(self.__db_path)
         self.me = self.get_my_player()
         self.flash_all_players()
@@ -27,6 +36,10 @@ class Database:
         self.__con.commit()
 
     def get_my_player(self):
+        """Gets this player out of db.
+
+        Loads it into database class so we can use it
+        """
         cursor = self.__cursor()
         try:
             db_player = cursor.execute(
@@ -44,6 +57,7 @@ class Database:
             return self.create_new_player(uuid.uuid4(), "localhost", me=True)
 
     def create_tables(self):
+        """Create tables."""
         cursor = self.__cursor()
         cursor.execute(
             "CREATE TABLE IF NOT EXISTS location_data(id TEXT PRIMARY KEY, x REAL, y REAL, created_at TIMESTAMP, player_id TEXT)"
@@ -54,6 +68,10 @@ class Database:
         self._commit()
 
     def flash_all_players(self):
+        """Sets all players to unactive.
+
+        At start set all players that are not me to unactive
+        """
         cursor = self.__cursor()
         query = "UPDATE players SET active=false WHERE me=false"
         cursor.execute(query)
@@ -92,6 +110,7 @@ class Database:
         return [Player(player[0], player[1], player[2]) for player in db_active_players]
 
     def select_my_newest(self):
+        """Selects my newest gps data."""
         cursor = self.__cursor()
         query = "SELECT id, x, y, created_at FROM location_data WHERE player_id = ? ORDER BY created_at DESC LIMIT 1"
         db_point = cursor.execute(query, (self.me.id,)).fetchone()
@@ -108,7 +127,10 @@ class Database:
         self._commit()
 
     def insert_gps(self, gps, player):
-        # Insert a new gps or ignore if it already exists
+        """Inserts gps data.
+
+        Ignores it if it already exists in the database
+        """
         query = "INSERT OR IGNORE INTO location_data (id, x, y, created_at, player_id) VALUES (?, ?, ?, ?, ?)"
         cursor = self.__cursor()
 

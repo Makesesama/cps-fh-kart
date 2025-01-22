@@ -19,3 +19,5 @@
 ** DONE threading
 CLOSED: [2025-01-22 Mi 22:14]
 ** TODO UI
+** TODO Change Threads to classes
+So i can abstract the database connection handling into it's own class

@@ -7,6 +7,11 @@ from .server import KartClient, KartServer
 
 
 def main():
+    """Main entry point.
+
+    Parses arguments with argparse. Can switch between client and server mode.
+    Default is Server.
+    """
     logging.basicConfig(level=logging.INFO)
 
     UDP_IP = get_config_option("TARGET_HOST")
