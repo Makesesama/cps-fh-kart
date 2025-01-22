@@ -7,3 +7,6 @@ class Player(msgspec.Struct):
     address: str
     me: bool = False
     active: bool = True
+
+    def log(self):
+        return f"{self.id}, {self.address}"

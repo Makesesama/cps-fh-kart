@@ -1,10 +1,11 @@
+import logging
 import sqlite3
 import uuid
 from datetime import datetime
 
-from .player import Player
-from .payload import Payload
 from .gps import DBGPS
+from .payload import Payload
+from .player import Player
 
 
 class Database:
@@ -13,6 +14,8 @@ class Database:
 
     def __init__(self, database_path: str):
         self.__db_path = database_path
+
+    def post_init(self):
         self.__con = sqlite3.connect(self.__db_path)
         self.me = self.get_my_player()
         self.flash_all_players()
@@ -58,6 +61,7 @@ class Database:
 
     def check_player_and_insert(self, player):
         if not self.check_player(player):
+            logging.info(f"Added new active Player {player}")
             self.create_new_player(player.id, player.address)
         return player
 
@@ -103,19 +107,24 @@ class Database:
         )
         self._commit()
 
-    def insert_payload(self, payload: Payload):
-        query = "INSERT INTO location_data (id, x, y, created_at, player_id) VALUES (?, ?, ?, ?, ?)"
+    def insert_gps(self, gps, player):
+        # Insert a new gps or ignore if it already exists
+        query = "INSERT OR IGNORE INTO location_data (id, x, y, created_at, player_id) VALUES (?, ?, ?, ?, ?)"
         cursor = self.__cursor()
 
         cursor.execute(
             query,
             (
                 str(uuid.uuid4()),
-                payload.gps.x,
-                payload.gps.y,
+                gps.x,
+                gps.y,
                 datetime.now(),
-                str(payload.player.id),
+                str(player.id),
             ),
         )
+        self._commit()
+
+    def insert_payload(self, payload: Payload):
+        self.insert_gps(payload.gps, payload.player)
         self.check_player_and_insert(payload.player)
         self._commit()

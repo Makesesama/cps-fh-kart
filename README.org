@@ -14,3 +14,8 @@
 - Always try to register new server
 - Drop Coordinates to sqlite
 - query sqlite if needed
+
+* TODOS
+** DONE threading
+CLOSED: [2025-01-22 Mi 22:14]
+** TODO UI
