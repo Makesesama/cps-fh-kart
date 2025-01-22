@@ -4,5 +4,6 @@ import uuid
 
 class Player(msgspec.Struct):
     id: uuid.UUID
-    me: bool
+    address: str
+    me: bool = False
     active: bool = True

@@ -1,8 +1,8 @@
 import msgspec
-import uuid
 from .gps import GPSMock
+from .player import Player
 
 
 class Payload(msgspec.Struct):
-    player_id: uuid.UUID
+    player: Player
     gps: GPSMock
