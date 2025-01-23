@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 from .database import Database
 from .helper import get_config_option
 from .server import KartClient, KartServer
+from .gui import start
 
 
 def main():
@@ -20,13 +21,15 @@ def main():
     database = get_config_option("DB_PATH")
 
     parser = ArgumentParser(prog="CPSFHKart")
-    parser.add_argument("--mode", default="receive", choices=["receive", "send"])
+    parser.add_argument("--mode", default="receive", choices=["receive", "send", "gui"])
     args = parser.parse_args()
 
     if args.mode == "receive":
         KartServer(UDP_IP, UDP_PORT, database)
     elif args.mode == "send":
         KartClient(UDP_IP, UDP_PORT, database)
+    elif args.mode == "gui":
+        start(database, UDP_IP, UDP_PORT)
 
 
 if __name__ == "__main__":

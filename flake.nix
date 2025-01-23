@@ -19,6 +19,8 @@
           msgspec
 
           pyqt5
+          pyqtwebengine
+          folium
         ];
     in
     {
@@ -28,6 +30,7 @@
           pkgs.ruff
           pkgs.qt5.full
           pkgs.qt5.wrapQtAppsHook
+          pkgs.libsForQt5.qt5.qtwebengine
         ];
       };
     };

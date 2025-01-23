@@ -20,7 +20,7 @@ class GPSMock(msgspec.Struct):
 
     @classmethod
     def create(self):
-        return GPSMock(random.uniform(1.2, 123141.1), random.uniform(1.2, 123141.1))
+        return GPSMock(random.uniform(54.27, 54.35), random.uniform(10.1, 10.2))
 
 
 class DBGPS(GPSMock):
