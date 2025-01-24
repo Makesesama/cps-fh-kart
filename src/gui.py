@@ -64,19 +64,27 @@ class CoordinateLogger(QWidget):
         self.setGeometry(100, 100, 800, 600)
         self.show()
 
-        self.newest = self.database.select_my_newest()
+        self.newest = self.database.select_my_newest_point()
         # Initial map display
-        self.updateMap(self.newest.x, self.newest.y)
+        if self.newest:
+            self.updateMap(self.newest.x, self.newest.y)
 
     def updateCoordinates(self):
         logging.info("Updating Coords")
 
-        gps = self.database.select_my_newest()
-        if self.newest.id != gps.id:
-            self.coordLabel.setText(f"Coordinates: (X: {gps.x}, Y: {gps.y})")
-            # self.logArea.append(f"Updated Coordinates: (X: {gps.x}, Y: {gps.y})")
-            self.updateMap(gps.x, gps.y)
-            self.newest = gps
+        gps = self.database.select_my_newest_point()
+        if gps:
+            if self.newest:
+                if self.newest.id != gps.id:
+                    self._set_coordlabel_and_newest(gps)
+            else:
+                self._set_coordlabel_and_newest(gps)
+
+    def _set_coordlabel_and_newest(self, gps):
+        self.coordLabel.setText(f"Coordinates: (X: {gps.x}, Y: {gps.y})")
+        # self.logArea.append(f"Updated Coordinates: (X: {gps.x}, Y: {gps.y})")
+        self.updateMap(gps.x, gps.y)
+        self.newest = gps
 
     def updateMap(self, latitude, longitude):
         # Create a Folium map

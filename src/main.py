@@ -1,7 +1,6 @@
 import logging
 from argparse import ArgumentParser
 
-from .database import Database
 from .helper import get_config_option
 from .server import KartClient, KartServer
 from .gui import start

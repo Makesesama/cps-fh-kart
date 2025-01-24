@@ -6,7 +6,7 @@ import logging
 
 from .database import Database
 from .payload import Payload
-from .gps import GPSMock
+from .gps import GPSBase
 
 
 class KartClient:
@@ -32,12 +32,13 @@ class KartClient:
         """
         database.post_init()
         while not self.exit:
-            gps = GPSMock.create()
+            gps = GPSBase.create()
             logging.info(f"Inserted new Point {gps}")
             database.insert_gps(gps, database.me)
+            database.commit()
             time.sleep(5)
 
-    def ping(self, sock, ip: str, port: int, gps: GPSMock, database):
+    def ping(self, sock, ip: str, port: int, gps: GPSBase, database):
         """Sends a payload to a socket."""
         payload = Payload(database.me, gps)
         database.insert_payload(payload)
@@ -55,7 +56,7 @@ class KartClient:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # UDP
         logging.info("Sender started")
         while not self.exit:
-            gps = database.select_my_newest()
+            gps = database.select_my_newest_point()
             self.ping(sock, ip, port, gps, database)
 
             time.sleep(5)
@@ -89,7 +90,7 @@ class KartServer(KartClient):
             payload = msgspec.msgpack.decode(message, type=Payload)
             payload.player.address = address[0]
             database.insert_payload(payload)
-            my_newest_gps = database.select_my_newest()
+            my_newest_gps = database.select_my_newest_point()
 
             # print("My newest", my_newest_gps)
             logging.info(f"Received new point {payload.gps}")

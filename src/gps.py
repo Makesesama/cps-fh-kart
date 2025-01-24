@@ -6,7 +6,7 @@ import random
 from datetime import datetime
 
 
-class GPSMock(msgspec.Struct):
+class GPSBase(msgspec.Struct):
     """GPS data.
 
     Can be used to calculate distance between two gps points.
@@ -15,15 +15,15 @@ class GPSMock(msgspec.Struct):
     x: float
     y: float
 
-    def distance(self, gps: "GPSMock"):
+    def distance(self, gps: "GPSBase"):
         return math.dist((self.x, self.y), (gps.x, gps.y))
 
     @classmethod
     def create(self):
-        return GPSMock(random.uniform(54.27, 54.35), random.uniform(10.1, 10.2))
+        return GPSBase(random.uniform(54.27, 54.35), random.uniform(10.1, 10.2))
 
 
-class DBGPS(GPSMock):
+class DBGPS(GPSBase):
     """GPS data from database.
 
     Has extra id field to identify duplicates.
