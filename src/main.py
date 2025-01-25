@@ -20,7 +20,7 @@ def main():
     database = get_config_option("DB_PATH")
 
     parser = ArgumentParser(prog="CPSFHKart")
-    parser.add_argument("--mode", default="receive", choices=["receive", "send", "gui"])
+    parser.add_argument("--mode", default="gui", choices=["receive", "send", "gui"])
     args = parser.parse_args()
 
     if args.mode == "receive":

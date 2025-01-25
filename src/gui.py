@@ -14,6 +14,7 @@ from .database import Database
 from .helper import local_path
 from .player import Player
 from .server import KartClient, KartServer
+from .web import WebService
 
 
 class PlayerMap(QWidget):
@@ -112,6 +113,8 @@ class PlayerMap(QWidget):
 
 
 def start(database, ip, port):
+    web = WebService()
+    web.start()
     app = QApplication(sys.argv)
     ex = PlayerMap(database, ip, port)
     sys.exit(app.exec_())
