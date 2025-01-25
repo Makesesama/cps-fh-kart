@@ -1,7 +1,7 @@
 import logging
 from argparse import ArgumentParser
 
-from .helper import get_config_option
+from .helper import get_config_option, get_logging_option
 from .server import KartClient, KartServer
 from .gui import start
 
@@ -12,7 +12,7 @@ def main():
     Parses arguments with argparse. Can switch between client and server mode.
     Default is Server.
     """
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=get_logging_option())
 
     UDP_IP = get_config_option("TARGET_HOST")
     UDP_PORT = get_config_option("PORT")

@@ -1,5 +1,7 @@
+import logging
 import os
 import socket
+
 from xdg import BaseDirectory
 
 local_path = BaseDirectory.save_data_path("cps_fh_kart")
@@ -13,6 +15,18 @@ def get_ip_address():
 
 
 my_ip = get_ip_address()
+
+
+def get_logging_option():
+    option_string = os.environ.get("LOGGING", "INFO")
+
+    match option_string:
+        case "INFO":
+            return logging.INFO
+        case "DEBUG":
+            return logging.DEBUG
+        case "WARN":
+            return logging.WARNING
 
 
 def get_config_option(config_name: str):

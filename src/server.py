@@ -17,7 +17,7 @@ def ping(sock, ip: str, port: int, gps: DBGPS, database):
     # database.insert_payload(payload)
     packed = msgspec.msgpack.encode(payload)
     sock.sendto(packed, (ip, port))
-    logging.info(f"Send new point {gps} to {ip}:{port}")
+    logging.debug(f"Send new point {gps} to {ip}:{port}")
     return payload
 
 
@@ -33,7 +33,7 @@ class GPSService(threading.Thread):
         self.database.post_init()
         while not self.exit:
             gps = DBGPS.create()
-            logging.info(f"Inserted new Point {gps}")
+            logging.debug(f"Inserted new Point {gps}")
             self.database.insert_gps(gps, self.database.me)
             self.database.commit()
             time.sleep(sleep_time)
@@ -53,7 +53,6 @@ class PingBackService(threading.Thread):
         while not self.exit:
             gps = self.database.select_my_newest_point()
             players = self.database.select_active_players()
-            print("players", players)
 
             self.send_players(players, self.port, gps, self.database)
             time.sleep(sleep_time)
@@ -63,9 +62,8 @@ class PingBackService(threading.Thread):
 
         for player in players:
             if not player.me:
-                print(player)
                 if player.address not in ["localhost", "127.0.0.1", my_ip]:
-                    logging.info(f"Sending to player {str(player.id)}")
+                    logging.debug(f"Sending to player {str(player.id)}")
                     ping(sock, player.address, port, gps, database)
                 else:
                     ping(sock, player.address, port, gps, database)
@@ -89,7 +87,7 @@ class SenderService(threading.Thread):
         """
         self.database.post_init()
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # UDP
-        logging.info("Sender started")
+        logging.debug("Sender started")
         while not self.exit:
             gps = self.database.select_my_newest_point()
             ping(sock, self.ip, self.port, gps, self.database)
@@ -111,7 +109,7 @@ class ReceiverService(threading.Thread):
         self.database.post_init()
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.bind((self.ip, self.port))
-        logging.info("Receiver started")
+        logging.debug("Receiver started")
 
         while not self.exit:
             # Receive the client packet along with the address it is coming from
@@ -121,7 +119,7 @@ class ReceiverService(threading.Thread):
             payload.player.address = address[0]
             self.database.insert_payload(payload)
 
-            logging.info(f"Received new point {payload.gps}")
+            logging.debug(f"Received new point {payload.gps}")
 
 
 class KartClient:

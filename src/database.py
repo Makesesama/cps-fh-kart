@@ -92,7 +92,7 @@ class Database:
 
     def check_player_and_insert(self, player):
         if not self.check_player(player):
-            logging.info(f"Added new active Player {player}")
+            logging.debug(f"Added new active Player {player}")
             player = self.create_new_player(player.id, player.address)
         self.active_players.append(player)
         return player
@@ -108,6 +108,9 @@ class Database:
 
         if not bool(db_player[2]):
             cursor.execute(update_query, (str(player.id),))
+            logging.info(
+                f"New Player joined the Game! Current player: {len(self.active_players)}"
+            )
             self.commit()
         return True
 
@@ -115,6 +118,9 @@ class Database:
         player = Player(id, address, True, me)
         self.insert_player(player)
         self.commit()
+        logging.info(
+            f"New Player joined the Game! Current player: {len(self.active_players)}"
+        )
         return player
 
     def create_new_game(self, id=0):

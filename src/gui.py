@@ -7,7 +7,7 @@ import time
 import folium
 import serial
 from PyQt5.QtCore import QTimer, QUrl
-from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineSettings
 from PyQt5.QtWidgets import QApplication, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from .database import Database
@@ -64,7 +64,7 @@ class PlayerMap(QWidget):
             self.updateMap(self.newest, self.database.game.target)
 
     def updateCoordinates(self):
-        logging.info("Updating Coords")
+        logging.debug("Updating Coords")
 
         gps = self.database.select_my_newest_point()
         if gps:
@@ -105,6 +105,9 @@ class PlayerMap(QWidget):
         folium_map.save(map_file)
 
         html_map = QUrl.fromLocalFile(os.path.abspath(map_file))
+        self.map_view.page().settings().setAttribute(
+            QWebEngineSettings.LocalContentCanAccessRemoteUrls, True
+        )
         self.map_view.load(html_map)
 
 
