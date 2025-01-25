@@ -8,25 +8,14 @@ import folium
 import serial
 from PyQt5.QtCore import QTimer, QUrl
 from PyQt5.QtWebEngineWidgets import QWebEngineView
-from PyQt5.QtWidgets import (
-    QApplication,
-    QComboBox,
-    QFrame,
-    QGridLayout,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QPushButton,
-    QTextEdit,
-    QVBoxLayout,
-    QWidget,
-)
+from PyQt5.QtWidgets import QApplication, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from .database import Database
-from .server import KartClient
+from .player import Player
+from .server import KartClient, KartServer
 
 
-class CoordinateLogger(QWidget):
+class PlayerMap(QWidget):
     def __init__(self, database, ip, port):
         super().__init__()
 
@@ -34,7 +23,7 @@ class CoordinateLogger(QWidget):
         self.database.post_init()
         self.newest = None
 
-        KartClient(ip, port, database, False)
+        KartServer(ip, port, database)
 
         self.initUI()
         self.timer = QTimer(self)
@@ -52,6 +41,10 @@ class CoordinateLogger(QWidget):
         self.coordLabel = QLabel("Coordinates: (Lat: 0, Lon: 0)")
         leftLayout.addWidget(self.coordLabel)
 
+        # Text field to update
+        self.textField = QLabel("")  # New text field
+        leftLayout.addWidget(self.textField)
+
         # Folium map display
         self.map_view = QWebEngineView()
 
@@ -67,7 +60,7 @@ class CoordinateLogger(QWidget):
         self.newest = self.database.select_my_newest_point()
         # Initial map display
         if self.newest:
-            self.updateMap(self.newest.x, self.newest.y)
+            self.updateMap(self.newest, self.database.game.target)
 
     def updateCoordinates(self):
         logging.info("Updating Coords")
@@ -81,28 +74,40 @@ class CoordinateLogger(QWidget):
                 self._set_coordlabel_and_newest(gps)
 
     def _set_coordlabel_and_newest(self, gps):
+        target = self.database.game.target
         self.coordLabel.setText(f"Coordinates: (X: {gps.x}, Y: {gps.y})")
-        # self.logArea.append(f"Updated Coordinates: (X: {gps.x}, Y: {gps.y})")
-        self.updateMap(gps.x, gps.y)
+        self.textField.setText(
+            f"Distance to Target: {int(gps.distance(target))}m"
+        )  # Update new text field
+        self.updateMap(gps, target, self.database.active_players)
         self.newest = gps
 
-    def updateMap(self, latitude, longitude):
+    def updateMap(self, gps, target, players: list[Player] = []):
         # Create a Folium map
-        folium_map = folium.Map(location=[latitude, longitude], zoom_start=80)
-        folium.Marker([latitude, longitude], popup="Current Location").add_to(
-            folium_map
-        )
+        folium_map = folium.Map(location=[gps.x, gps.y], zoom_start=10)
+
+        folium.Marker([gps.x, gps.y], popup="Current Location").add_to(folium_map)
+
+        folium.Marker(
+            [target.x, target.y], popup="Target", icon=folium.Icon(color="red")
+        ).add_to(folium_map)
+
+        player_group = folium.FeatureGroup("Player Group").add_to(folium_map)
+        for player in players:
+            points = player.newest_point(self.database)
+            folium.Marker(points.as_list(), popup=str(player.id)).add_to(player_group)
+
+        trail_coordinates = [gps.as_list(), target.as_list()]
+        folium.PolyLine(trail_coordinates, tooltip="Coast").add_to(folium_map)
 
         map_file = "map.html"
         folium_map.save(map_file)
 
         html_map = QUrl.fromLocalFile(os.path.abspath(map_file))
-        # Load the HTML into the QWebEngineView
-        # self.map_view.setHtml(map_html)
         self.map_view.load(html_map)
 
 
 def start(database, ip, port):
     app = QApplication(sys.argv)
-    ex = CoordinateLogger(database, ip, port)
+    ex = PlayerMap(database, ip, port)
     sys.exit(app.exec_())

@@ -12,3 +12,6 @@ class Player(msgspec.Struct):
     address: str
     me: bool = False
     active: bool = True
+
+    def newest_point(self, database):
+        return database.select_newest_point(self.id)

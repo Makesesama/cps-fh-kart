@@ -9,13 +9,28 @@ from .payload import Payload
 from .gps import GPSBase
 
 
+class GPSService(threading.Thread):
+    def __init__(self, database):
+        self.database = database
+
+        self.exit = False
+
+        threading.Thread.__init__(self)
+
+    def run(self):
+        self.database.post_init()
+        while not self.exit:
+            gps = GPSBase.create()
+            logging.info(f"Inserted new Point {gps}")
+            self.database.insert_gps(gps, self.database.me)
+            self.database.commit()
+            time.sleep(5)
+
+
 class KartClient:
     def __init__(self, ip, port, database, sender_thread=True):
         self.exit = False
-
-        self.gps_thread = threading.Thread(
-            target=self.get_new_points, args=(Database(database),)
-        )
+        self.gpsservice = GPSService(Database(database))
 
         if sender_thread:
             self.sending_thread = threading.Thread(
@@ -23,20 +38,7 @@ class KartClient:
             )
             self.sending_thread.start()
 
-        self.gps_thread.start()
-
-    def get_new_points(self, database):
-        """GPS thread.
-
-        Gets new GPS data and puts them into the database.
-        """
-        database.post_init()
-        while not self.exit:
-            gps = GPSBase.create()
-            logging.info(f"Inserted new Point {gps}")
-            database.insert_gps(gps, database.me)
-            database.commit()
-            time.sleep(5)
+        self.gpsservice.start()
 
     def ping(self, sock, ip: str, port: int, gps: GPSBase, database):
         """Sends a payload to a socket."""
@@ -100,8 +102,8 @@ class KartServer(KartClient):
 
             # After every received packet we ping our payload back
             # TODO also ping back other coords so everyone has all data
-            for player in database.select_active_players():
-                if player.address not in ["localhost", "127.0.0.1"]:
-                    self.ping(sock, player.address, port, my_newest_gps, database)
-                else:
-                    self.ping(sock, player.address, 8002, my_newest_gps, database)
+            # for player in database.select_active_players():
+            #     if player.address not in ["localhost", "127.0.0.1"]:
+            #         self.ping(sock, player.address, port, my_newest_gps, database)
+            #     else:
+            #         self.ping(sock, player.address, 8002, my_newest_gps, database)

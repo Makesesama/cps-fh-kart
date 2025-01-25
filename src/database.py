@@ -18,6 +18,7 @@ class Database:
     __db_path: str
     me: Player
     game: Game
+    active_players: list[Player] = []
 
     def __init__(self, database_path: str):
         self.__db_path = database_path
@@ -92,7 +93,8 @@ class Database:
     def check_player_and_insert(self, player):
         if not self.check_player(player):
             logging.info(f"Added new active Player {player}")
-            self.create_new_player(player.id, player.address)
+            player = self.create_new_player(player.id, player.address)
+        self.active_players.append(player)
         return player
 
     def check_player(self, player):
@@ -125,7 +127,10 @@ class Database:
         query = "SELECT id, address, active FROM players WHERE active=true AND me=false"
         db_active_players = cursor.execute(query).fetchall()
 
-        return [Player(player[0], player[1], player[2]) for player in db_active_players]
+        self.active_players = [
+            Player(player[0], player[1], player[2]) for player in db_active_players
+        ]
+        return self.active_players
 
     def select_newest_point(self, player_id) -> DBGPS | None:
         """Selects my newest gps data."""
@@ -135,8 +140,8 @@ class Database:
         db_point = cursor.execute(
             query,
             (
-                player_id,
-                self.game.id,
+                str(player_id),
+                str(self.game.id),
             ),
         ).fetchone()
         if not db_point:
