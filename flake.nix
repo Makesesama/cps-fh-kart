@@ -18,6 +18,8 @@
           msgpack
           msgspec
 
+          pyxdg
+
           pyqt5
           pyqtwebengine
           folium

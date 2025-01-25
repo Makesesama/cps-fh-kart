@@ -11,6 +11,7 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWidgets import QApplication, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from .database import Database
+from .helper import local_path
 from .player import Player
 from .server import KartClient, KartServer
 
@@ -100,7 +101,7 @@ class PlayerMap(QWidget):
         trail_coordinates = [gps.as_list(), target.as_list()]
         folium.PolyLine(trail_coordinates, tooltip="Coast").add_to(folium_map)
 
-        map_file = "map.html"
+        map_file = f"{local_path}/map.html"
         folium_map.save(map_file)
 
         html_map = QUrl.fromLocalFile(os.path.abspath(map_file))
