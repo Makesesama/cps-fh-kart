@@ -100,7 +100,7 @@ class Database:
     def check_player(self, player):
         cursor = self.__cursor()
         update_query = "UPDATE players SET active=true WHERE id = ?"
-        select_query = "SELECT id, address, active FROM players WHERE id = ?"
+        select_query = "SELECT id, address, active, me FROM players WHERE id = ?"
 
         db_player = cursor.execute(select_query, (str(player.id),)).fetchone()
         if db_player is None:
@@ -112,7 +112,7 @@ class Database:
         return True
 
     def create_new_player(self, id, address, me=False):
-        player = Player(id, address, me)
+        player = Player(id, address, True, me)
         self.insert_player(player)
         self.commit()
         return player
@@ -124,11 +124,14 @@ class Database:
 
     def select_active_players(self):
         cursor = self.__cursor()
-        query = "SELECT id, address, active FROM players WHERE active=true AND me=false"
+        query = (
+            "SELECT id, address, active, me FROM players WHERE active=true AND me=false"
+        )
         db_active_players = cursor.execute(query).fetchall()
 
         self.active_players = [
-            Player(player[0], player[1], player[2]) for player in db_active_players
+            Player(player[0], player[1], bool(player[2]), bool(player[3]))
+            for player in db_active_players
         ]
         return self.active_players
 
@@ -206,7 +209,7 @@ class Database:
         cursor.execute(
             query,
             (
-                str(uuid.uuid4()),
+                str(gps.id),
                 gps.x,
                 gps.y,
                 datetime.now(),
@@ -216,6 +219,7 @@ class Database:
         )
 
     def insert_payload(self, payload: Payload):
-        self.insert_gps(payload.gps, payload.player)
-        self.check_player_and_insert(payload.player)
+        player = self.check_player_and_insert(payload.player)
+        if not player.me:
+            self.insert_gps(payload.gps, payload.player)
         self.commit()

@@ -10,8 +10,8 @@ class Player(msgspec.Struct):
 
     id: uuid.UUID
     address: str
-    me: bool = False
     active: bool = True
+    me: bool = False
 
     def newest_point(self, database):
         return database.select_newest_point(self.id)

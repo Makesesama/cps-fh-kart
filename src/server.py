@@ -6,7 +6,17 @@ import logging
 
 from .database import Database
 from .payload import Payload
-from .gps import GPSBase
+from .gps import GPSBase, DBGPS
+
+
+def ping(sock, ip: str, port: int, gps: DBGPS, database):
+    """Sends a payload to a socket."""
+    payload = Payload(database.me, gps)
+    # database.insert_payload(payload)
+    packed = msgspec.msgpack.encode(payload)
+    sock.sendto(packed, (ip, port))
+    logging.info(f"Send new point {gps} to {ip}:{port}")
+    return payload
 
 
 class GPSService(threading.Thread):
@@ -20,69 +30,85 @@ class GPSService(threading.Thread):
     def run(self):
         self.database.post_init()
         while not self.exit:
-            gps = GPSBase.create()
+            gps = DBGPS.create()
             logging.info(f"Inserted new Point {gps}")
             self.database.insert_gps(gps, self.database.me)
             self.database.commit()
             time.sleep(5)
 
 
-class KartClient:
-    def __init__(self, ip, port, database, sender_thread=True):
+class PingBackService(threading.Thread):
+    def __init__(self, database, alternative_port: int):
+        self.database = database
+        self.alternative_port = alternative_port
+
         self.exit = False
-        self.gpsservice = GPSService(Database(database))
 
-        if sender_thread:
-            self.sending_thread = threading.Thread(
-                target=self.send, args=(ip, port, Database(database))
-            )
-            self.sending_thread.start()
+        threading.Thread.__init__(self)
 
-        self.gpsservice.start()
+    def run(self):
+        self.database.post_init()
+        while not self.exit:
+            gps = self.database.select_my_newest_point()
+            players = self.database.select_active_players()
+            print("players", players)
 
-    def ping(self, sock, ip: str, port: int, gps: GPSBase, database):
-        """Sends a payload to a socket."""
-        payload = Payload(database.me, gps)
-        database.insert_payload(payload)
-        packed = msgspec.msgpack.encode(payload)
-        sock.sendto(packed, (ip, port))
-        logging.info(f"Send new point {gps}")
-        return payload
+            self.send_players(players, 8000, gps, self.database)
+            time.sleep(5)
 
-    def send(self, ip, port, database):
+    def send_players(self, players, port, gps, database):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # UDP
+
+        for player in players:
+            if not player.me:
+                print(player)
+                if player.address not in ["localhost", "127.0.0.1"]:
+                    logging.info(f"Sending to player {str(player.id)}")
+                    ping(sock, player.address, 8000, gps, database)
+                else:
+                    ping(sock, player.address, self.alternative_port, gps, database)
+            time.sleep(5)
+
+
+class SenderService(threading.Thread):
+    def __init__(self, database, ip: str, port: int):
+        self.database = database
+        self.ip = ip
+        self.port = port
+
+        self.exit = False
+
+        threading.Thread.__init__(self)
+
+    def run(self):
         """Sending Thread function.
 
         Sends packets to a server and sleeps for a while
         """
-        database.post_init()
+        self.database.post_init()
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # UDP
         logging.info("Sender started")
         while not self.exit:
-            gps = database.select_my_newest_point()
-            self.ping(sock, ip, port, gps, database)
+            gps = self.database.select_my_newest_point()
+            ping(sock, self.ip, self.port, gps, self.database)
 
             time.sleep(5)
 
 
-class KartServer(KartClient):
-    def __init__(self, ip, port, database):
-        super().__init__(ip, port, database, False)
-        self.receive_thread = threading.Thread(
-            target=self.receive, args=(ip, port, Database(database))
-        )
-        self.receive_thread.start()
+class ReceiverService(threading.Thread):
+    def __init__(self, database, ip: str, port: int):
+        self.database = database
+        self.ip = ip
+        self.port = port
 
-    def receive(self, ip, port, database):
-        """Receiver Thread function.
+        self.exit = False
 
-        Receives the packets of clients. Saves them into Database and registers
-        the sender in the database. Also sends saved gps to active players every
-        time it receives.
-        """
+        threading.Thread.__init__(self)
 
-        database.post_init()
+    def run(self):
+        self.database.post_init()
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.bind((ip, port))
+        sock.bind((self.ip, self.port))
         logging.info("Receiver started")
 
         while not self.exit:
@@ -91,19 +117,35 @@ class KartServer(KartClient):
 
             payload = msgspec.msgpack.decode(message, type=Payload)
             payload.player.address = address[0]
-            database.insert_payload(payload)
-            my_newest_gps = database.select_my_newest_point()
+            self.database.insert_payload(payload)
 
-            # print("My newest", my_newest_gps)
             logging.info(f"Received new point {payload.gps}")
-            # print("Their newest", payload.gps)
-            # print("Their distance", my_newest_gps.distance(payload.gps))
-            # print("Players to ping back", self.database.select_active_players())
 
-            # After every received packet we ping our payload back
-            # TODO also ping back other coords so everyone has all data
-            # for player in database.select_active_players():
-            #     if player.address not in ["localhost", "127.0.0.1"]:
-            #         self.ping(sock, player.address, port, my_newest_gps, database)
-            #     else:
-            #         self.ping(sock, player.address, 8002, my_newest_gps, database)
+
+class KartClient:
+    def __init__(self, ip, port, database, sender_thread=False):
+        self.exit = False
+        self.gpsservice = GPSService(Database(database))
+
+        if sender_thread:
+            self.sending_thread = SenderService(Database(database), "localhost", 8000)
+            self.sending_thread.start()
+
+        self.gpsservice.start()
+
+
+class KartServer:
+    def __init__(self, ip, port, database):
+        self.receive_thread = ReceiverService(Database(database), "localhost", 8000)
+        self.receive_thread_alt = ReceiverService(Database(database), "localhost", 8191)
+        self.exit = False
+        self.ping_back = PingBackService(Database(database), 8191)
+        self.gpsservice = GPSService(Database(database))
+
+        self.sending_thread = SenderService(Database(database), "localhost", 8000)
+
+        self.gpsservice.start()
+        self.receive_thread.start()
+        self.receive_thread_alt.start()
+        self.sending_thread.start()
+        self.ping_back.start()

@@ -1,5 +1,5 @@
 import msgspec
-from .gps import GPSBase
+from .gps import GPSBase, DBGPS
 from .player import Player
 
 
@@ -7,4 +7,4 @@ class Payload(msgspec.Struct):
     """Payload to be send to servers."""
 
     player: Player
-    gps: GPSBase
+    gps: DBGPS

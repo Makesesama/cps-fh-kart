@@ -44,3 +44,12 @@ class DBGPS(GPSBase):
 
     id: uuid.UUID
     created_at: datetime
+
+    @classmethod
+    def create(self):
+        return DBGPS(
+            random.uniform(54.27, 54.35),
+            random.uniform(10.1, 10.2),
+            uuid.uuid4(),
+            datetime.now(),
+        )
