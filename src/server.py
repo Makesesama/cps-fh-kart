@@ -1,12 +1,14 @@
-import threading
-import msgspec
-import socket
-import time
 import logging
+import socket
+import threading
+import time
+
+import msgspec
 
 from .database import Database
+from .gps import DBGPS, GPSBase
+from .helper import get_ip_address, my_ip, sleep_time
 from .payload import Payload
-from .gps import GPSBase, DBGPS
 
 
 def ping(sock, ip: str, port: int, gps: DBGPS, database):
@@ -34,13 +36,13 @@ class GPSService(threading.Thread):
             logging.info(f"Inserted new Point {gps}")
             self.database.insert_gps(gps, self.database.me)
             self.database.commit()
-            time.sleep(5)
+            time.sleep(sleep_time)
 
 
 class PingBackService(threading.Thread):
-    def __init__(self, database, alternative_port: int):
+    def __init__(self, database, port):
         self.database = database
-        self.alternative_port = alternative_port
+        self.port = port
 
         self.exit = False
 
@@ -53,8 +55,8 @@ class PingBackService(threading.Thread):
             players = self.database.select_active_players()
             print("players", players)
 
-            self.send_players(players, 8000, gps, self.database)
-            time.sleep(5)
+            self.send_players(players, self.port, gps, self.database)
+            time.sleep(sleep_time)
 
     def send_players(self, players, port, gps, database):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # UDP
@@ -62,12 +64,12 @@ class PingBackService(threading.Thread):
         for player in players:
             if not player.me:
                 print(player)
-                if player.address not in ["localhost", "127.0.0.1"]:
+                if player.address not in ["localhost", "127.0.0.1", my_ip]:
                     logging.info(f"Sending to player {str(player.id)}")
-                    ping(sock, player.address, 8000, gps, database)
+                    ping(sock, player.address, port, gps, database)
                 else:
-                    ping(sock, player.address, self.alternative_port, gps, database)
-            time.sleep(5)
+                    ping(sock, player.address, port, gps, database)
+            time.sleep(sleep_time)
 
 
 class SenderService(threading.Thread):
@@ -92,7 +94,7 @@ class SenderService(threading.Thread):
             gps = self.database.select_my_newest_point()
             ping(sock, self.ip, self.port, gps, self.database)
 
-            time.sleep(5)
+            time.sleep(sleep_time)
 
 
 class ReceiverService(threading.Thread):
@@ -128,7 +130,7 @@ class KartClient:
         self.gpsservice = GPSService(Database(database))
 
         if sender_thread:
-            self.sending_thread = SenderService(Database(database), "localhost", 8000)
+            self.sending_thread = SenderService(Database(database), ip, port)
             self.sending_thread.start()
 
         self.gpsservice.start()
@@ -136,13 +138,13 @@ class KartClient:
 
 class KartServer:
     def __init__(self, ip, port, database):
-        self.receive_thread = ReceiverService(Database(database), "localhost", 8000)
+        self.receive_thread = ReceiverService(Database(database), my_ip, port)
         self.receive_thread_alt = ReceiverService(Database(database), "localhost", 8191)
         self.exit = False
-        self.ping_back = PingBackService(Database(database), 8191)
+        self.ping_back = PingBackService(Database(database), port)
         self.gpsservice = GPSService(Database(database))
 
-        self.sending_thread = SenderService(Database(database), "localhost", 8000)
+        self.sending_thread = SenderService(Database(database), ip, port)
 
         self.gpsservice.start()
         self.receive_thread.start()
