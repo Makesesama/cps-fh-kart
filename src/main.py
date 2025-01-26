@@ -20,7 +20,15 @@ def main():
     database = get_config_option("DB_PATH")
 
     parser = ArgumentParser(prog="CPSFHKart")
+
     parser.add_argument("--mode", default="gui", choices=["receive", "send", "gui"])
+
+    parser.add_argument(
+        "target",
+        help="The target ip or hostname the program should try to ping",
+        type=str,
+    )
+
     args = parser.parse_args()
 
     if args.mode == "receive":
@@ -28,7 +36,7 @@ def main():
     elif args.mode == "send":
         KartClient(UDP_IP, UDP_PORT, database)
     elif args.mode == "gui":
-        start(database, UDP_IP, UDP_PORT)
+        start(database, args.target, UDP_PORT)
 
 
 if __name__ == "__main__":

@@ -25,7 +25,7 @@ class PlayerMap(QWidget):
         self.database.post_init()
         self.newest = None
 
-        KartServer(ip, port, database)
+        self.server = KartServer(ip, port, database)
 
         self.initUI()
         self.timer = QTimer(self)
