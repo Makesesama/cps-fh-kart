@@ -23,6 +23,8 @@
           pyqt5
           pyqtwebengine
           folium
+
+          pipx
         ];
     in
     {

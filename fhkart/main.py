@@ -3,7 +3,7 @@ from argparse import ArgumentParser
 
 from .helper import get_config_option, get_logging_option
 from .server import KartClient, KartServer
-from .gui import start
+from .gui import start_gui
 
 
 def main():
@@ -36,7 +36,11 @@ def main():
     elif args.mode == "send":
         KartClient(UDP_IP, UDP_PORT, database)
     elif args.mode == "gui":
-        start(database, args.target, UDP_PORT)
+        start_gui(database, args.target, UDP_PORT)
+
+
+def start():
+    main()
 
 
 if __name__ == "__main__":

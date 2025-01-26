@@ -112,7 +112,7 @@ class PlayerMap(QWidget):
         self.map_view.load(html_map)
 
 
-def start(database, ip, port):
+def start_gui(database, ip, port):
     web = WebService()
     web.start()
     app = QApplication(sys.argv)
