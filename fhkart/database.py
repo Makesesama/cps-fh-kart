@@ -6,7 +6,7 @@ from datetime import datetime
 from .game import Game
 from .gps import DBGPS, GPSBase
 from .payload import Payload
-from .player import Player
+from .player import Player, PlayerPoints
 
 
 class Database:
@@ -130,16 +130,32 @@ class Database:
 
     def select_active_players(self):
         cursor = self.__cursor()
-        query = (
-            "SELECT id, address, active, me FROM players WHERE active=true AND me=false"
-        )
+        query = """
+        SELECT players.id, address, active, me, x, y, location_data.id loc_id, location_data.created_at FROM players
+        JOIN location_data ON location_data.player_id = players.id
+        WHERE active=true AND location_data.game_id = 100
+        LIMIT 10
+        """
         db_active_players = cursor.execute(query).fetchall()
 
-        self.active_players = [
-            Player(player[0], player[1], bool(player[2]), bool(player[3]))
-            for player in db_active_players
-        ]
-        return self.active_players
+        active_players = []
+        for player in db_active_players:
+            id = player[0]
+            active_players.append(
+                PlayerPoints(
+                    id=player[0],
+                    address=player[1],
+                    active=bool(player[2]),
+                    me=bool(player[3]),
+                    points=[
+                        DBGPS(gps[4], gps[5], gps[6], gps[7])
+                        for gps in db_active_players
+                        if gps[0] == id
+                    ],
+                )
+            )
+        self.active_players = active_players
+        return active_players
 
     def select_newest_point(self, player_id) -> DBGPS | None:
         """Selects my newest gps data."""
