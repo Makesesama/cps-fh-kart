@@ -28,15 +28,16 @@ def main():
         help="The target ip or hostname the program should try to ping",
         type=str,
     )
+    parser.add_argument("--mock", default=False, help="For testing set mock to true")
 
     args = parser.parse_args()
 
     if args.mode == "receive":
-        KartServer(UDP_IP, UDP_PORT, database)
+        KartServer(UDP_IP, UDP_PORT, database, args)
     elif args.mode == "send":
-        KartClient(UDP_IP, UDP_PORT, database)
+        KartClient(UDP_IP, UDP_PORT, database, args)
     elif args.mode == "gui":
-        start_gui(database, args.target, UDP_PORT)
+        start_gui(database, args.target, UDP_PORT, args)
 
 
 def start():

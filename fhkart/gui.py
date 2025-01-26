@@ -18,14 +18,14 @@ from .web import WebService
 
 
 class PlayerMap(QWidget):
-    def __init__(self, database, ip, port):
+    def __init__(self, database, ip, port, args):
         super().__init__()
 
         self.database = Database(database)
         self.database.post_init()
         self.newest = None
 
-        self.server = KartServer(ip, port, database)
+        self.server = KartServer(ip, port, database, args)
 
         self.initUI()
         self.timer = QTimer(self)
@@ -112,9 +112,9 @@ class PlayerMap(QWidget):
         self.map_view.load(html_map)
 
 
-def start_gui(database, ip, port):
+def start_gui(database, ip, port, args):
     web = WebService()
     web.start()
     app = QApplication(sys.argv)
-    ex = PlayerMap(database, ip, port)
+    ex = PlayerMap(database, ip, port, args)
     sys.exit(app.exec_())

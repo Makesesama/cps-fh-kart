@@ -6,7 +6,7 @@ import time
 import msgspec
 
 from .database import Database
-from .gps import DBGPS, GPSBase
+from .gps import DBGPS, GPSBase, GPSService
 from .helper import get_ip_address, my_ip, sleep_time
 from .payload import Payload
 
@@ -21,7 +21,7 @@ def ping(sock, ip: str, port: int, gps: DBGPS, database):
     return payload
 
 
-class GPSService(threading.Thread):
+class GPSMockService(threading.Thread):
     def __init__(self, database):
         self.database = database
 
@@ -125,7 +125,7 @@ class ReceiverService(threading.Thread):
 class KartClient:
     def __init__(self, ip, port, database, sender_thread=False):
         self.exit = False
-        self.gpsservice = GPSService(Database(database))
+        self.gpsservice = GPSMockService(Database(database))
 
         if sender_thread:
             self.sending_thread = SenderService(Database(database), ip, port)
@@ -135,12 +135,16 @@ class KartClient:
 
 
 class KartServer:
-    def __init__(self, ip, port, database):
+    def __init__(self, ip, port, database, args):
         self.receive_thread = ReceiverService(Database(database), my_ip, port)
         self.receive_thread_alt = ReceiverService(Database(database), "localhost", 8191)
         self.exit = False
         self.ping_back = PingBackService(Database(database), port)
-        self.gpsservice = GPSService(Database(database))
+
+        if args.mock:
+            self.gpsservice = GPSMockService(Database(database))
+        else:
+            self.gpsservice = GPSService(Database(database))
 
         self.sending_thread = SenderService(Database(database), ip, port)
 
