@@ -1,11 +1,17 @@
 {
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+  inputs.systems.url = "github:nix-systems/default";
 
   outputs =
-    { nixpkgs, ... }:
+    { nixpkgs, systems, ... }:
     let
-      system = "x86_64-linux";
-      pkgs = nixpkgs.legacyPackages.${system};
+      eachSystem = nixpkgs.lib.genAttrs (import systems);
+      pkgsFor = eachSystem (
+        system:
+        import nixpkgs {
+          localSystem = system;
+        }
+      );
       pythonPackages =
         p: with p; [
           python-lsp-server
@@ -28,14 +34,16 @@
         ];
     in
     {
-      devShells.${system}.default = pkgs.mkShell {
-        packages = [
-          (pkgs.python312.withPackages pythonPackages)
-          pkgs.ruff
-          pkgs.qt5.full
-          pkgs.qt5.wrapQtAppsHook
-          pkgs.libsForQt5.qt5.qtwebengine
-        ];
-      };
+      devShells = eachSystem (system: {
+        default = pkgsFor.${system}.mkShell {
+          packages = with pkgsFor.${system}; [
+            (python312.withPackages pythonPackages)
+            ruff
+            qt5.full
+            qt5.wrapQtAppsHook
+            libsForQt5.qt5.qtwebengine
+          ];
+        };
+      });
     };
 }
