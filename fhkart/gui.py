@@ -86,7 +86,7 @@ class PlayerMap(QWidget):
 
     def updateMap(self, gps, target, players: list[Player] = []):
         # Create a Folium map
-        folium_map = folium.Map(location=[gps.x, gps.y], zoom_start=10)
+        folium_map = folium.Map(location=[gps.x, gps.y], zoom_start=30)
 
         folium.Marker([gps.x, gps.y], popup="Current Location").add_to(folium_map)
 
