@@ -11,6 +11,18 @@ import msgspec
 import serial
 
 
+def place(point, other_points, target):
+    place = 1
+    distance = point.distance(target)
+    if other_points == []:
+        return place
+    for other in other_points:
+        if other.distance(target) < distance:
+            place += 1
+
+    return place
+
+
 class GPSBase(msgspec.Struct):
     """GPS data.
 
@@ -72,7 +84,7 @@ class DBGPS(GPSBase):
 class GPSService(threading.Thread):
     def __init__(self, database):
         self.database = database
-        self.serial_port = "/dev/ttyAMA0"
+        self.serial_port = "/dev/ttyUSB3"
         self.baud_rate = 115200
         self.exit = False
 
@@ -80,19 +92,70 @@ class GPSService(threading.Thread):
 
     def run(self):
         self.database.post_init()
+        self.startup()
 
         ser = serial.Serial(port=self.serial_port, baudrate=self.baud_rate, timeout=1)
         logging.debug(f"Serial port {self.serial_port} opened successfully.")
         time.sleep(1)
+        while not self.exit:
+            while True:
+                if ser.in_waiting > 0:
+                    response = ser.readline().decode().strip()
+                    if response != "":
+                        (x, y) = self.parse_INF_string(response)
+                        gps = DBGPS.from_parser(x, y)
+                        logging.debug(f"Inserted new Point {gps}")
+                        self.database.insert_gps(gps, self.database.me)
+                        self.database.commit()
+                    break
+
+            time.sleep(5)
+
+    def startup(self):
+        """
+        This function Initializes the serial connection
+        and configures the GNSS device to output the GPS Data.
+        """
+        ser = None
+        try:
+            ser = serial.Serial(
+                port=self.serial_port, baudrate=self.baud_rate, timeout=1
+            )
+            print(f"Serial port {self.serial_port} opened successfully.")
+            time.sleep(1)
+        except serial.SerialException as e:
+            print(f"Error opening serial port: {e}")
+        # else:
+        errorCounter = 0
+        ser.write("AT\r".encode())
+        time.sleep(1)
         while True:
             if ser.in_waiting > 0:
                 response = ser.readline().decode().strip()
-                (x, y) = self.parse_INF_string(response)
-                gps = DBGPS.from_parser(x, y)
-                logging.debug(f"Inserted new Point {gps}")
-                self.database.insert_gps(gps, self.database.me)
-                self.database.commit()
-                break
+                if response == "OK":
+                    print("SIM7000 Online.")
+                    ser.write("AT+CGNSPWR=1\r".encode())
+                    time.sleep(1)
+                    ser.write("AT+CGNSURC=1\r".encode())
+                    time.sleep(1)
+                    print("GNSS activated.")
+                    break
+                elif response == "ERROR" and errorCounter < 5:
+                    print("Something went wrong! Trying Again.")
+                    ser.write("\r\n".encode())
+                    ser.flush()
+                    time.sleep(1)
+                    ser.write("AT\r".encode())
+                    time.sleep(1)
+                    ser.flush()
+                    errorCounter += 1
+                elif errorCounter >= 5:
+                    print("Couldnt resolve. Exiting...")
+                    break
+        # finally:
+        #     if "ser" in locals() and ser.is_open:
+        #         ser.close()
+        #         print("Serial port closed.")
 
     def parse_INF_string(self, INF_string):
         """
@@ -117,5 +180,5 @@ class GPSService(threading.Thread):
             return latitude, longitude
         else:
             raise ValueError(
-                "Coordinates not found in the provided string. Put the Antenna Outdoors, Fool!"
+                f"Coordinates not found in the provided string. Put the Antenna Outdoors, Fool! String {INF_string}"
             )
