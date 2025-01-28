@@ -1,7 +1,7 @@
 import logging
 from argparse import ArgumentParser
 
-from .database import DBInfo
+from .database import Database, DBInfo
 from .game import Game
 from .gps import GPSBase
 from .gui import start_gui
@@ -32,12 +32,20 @@ def main():
         type=str,
     )
     parser.add_argument("--mock", default=False, help="For testing set mock to true")
-    parser.add_argument("--target-gps-x", default=54.1, help="The target", type=float)
-    parser.add_argument("--target-gps-y", default=10.2, help="The target", type=float)
+    parser.add_argument(
+        "--target-gps-x", default=54.332262, help="The target", type=float
+    )
+    parser.add_argument(
+        "--target-gps-y", default=10.180552, help="The target", type=float
+    )
 
     args = parser.parse_args()
 
-    database = DBInfo(path=db_path, game=Game(0, target=GPSBase(54.1, 10.2)))
+    game = Database.for_pre_init(db_path)
+    database = DBInfo(
+        path=db_path,
+        game=Game(game.id + 1, target=GPSBase(args.target_gps_x, args.target_gps_y)),
+    )
     if args.mode == "receive":
         KartServer(UDP_IP, UDP_PORT, database, args)
     elif args.mode == "send":

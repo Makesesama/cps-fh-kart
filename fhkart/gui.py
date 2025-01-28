@@ -89,34 +89,46 @@ class PlayerMap(QWidget):
         self.newest = gps
 
     def updateMap(self, gps, target, players: list[PlayerPoints] = []):
-        # Create a Folium map
-        folium_map = folium.Map(location=[gps.x, gps.y], zoom_start=30)
+        pick_me = [player for player in players if player.me]
+        if len(pick_me) > 0:
+            me = pick_me[0]
+            print(me.points)
 
-        folium.Marker([gps.x, gps.y], popup="Current Location").add_to(folium_map)
+            # Create a Folium map
+            folium_map = folium.Map(location=me.points[0].as_list(), zoom_start=30)
 
-        folium.Marker(
-            [target.x, target.y], popup="Target", icon=folium.Icon(color="red")
-        ).add_to(folium_map)
+            folium.Marker(
+                [target.x, target.y], popup="Target", icon=folium.Icon(color="red")
+            ).add_to(folium_map)
 
-        player_group = folium.FeatureGroup("Player Group").add_to(folium_map)
-        for player in players:
-            points = player.points[0]
-            folium.Marker(points.as_list(), popup=str(player.id)).add_to(player_group)
+            player_group = folium.FeatureGroup("Player Group").add_to(folium_map)
+            for player in players:
+                points = player.points[0]
+                if player.me:
+                    folium.Marker(points.as_list(), popup="Current Location").add_to(
+                        player_group
+                    )
+                else:
+                    folium.Marker(points.as_list(), popup=str(player.id)).add_to(
+                        player_group
+                    )
 
-        my_place = place(gps, [player.points[0] for player in players], target)
-        self.placeField.setText(f"My Place: {my_place}")
+            my_place = place(
+                me.points[0], [player.points[0] for player in players], target
+            )
+            self.placeField.setText(f"My Place: {my_place}")
 
-        trail_coordinates = [gps.as_list(), target.as_list()]
-        folium.PolyLine(trail_coordinates, tooltip="Coast").add_to(folium_map)
+            trail_coordinates = [me.points[0].as_list(), target.as_list()]
+            folium.PolyLine(trail_coordinates, tooltip="Coast").add_to(folium_map)
 
-        map_file = f"{local_path}/map.html"
-        folium_map.save(map_file)
+            map_file = f"{local_path}/map.html"
+            folium_map.save(map_file)
 
-        html_map = QUrl.fromLocalFile(os.path.abspath(map_file))
-        self.map_view.page().settings().setAttribute(
-            QWebEngineSettings.LocalContentCanAccessRemoteUrls, True
-        )
-        self.map_view.load(html_map)
+            html_map = QUrl.fromLocalFile(os.path.abspath(map_file))
+            self.map_view.page().settings().setAttribute(
+                QWebEngineSettings.LocalContentCanAccessRemoteUrls, True
+            )
+            self.map_view.load(html_map)
 
 
 def start_gui(database, ip, port, args):

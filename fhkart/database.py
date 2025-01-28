@@ -31,12 +31,22 @@ class Database:
         self.__db_path = database.path
         self.game = database.game
 
+    @classmethod
+    def for_pre_init(self, database: str):
+        db = Database(DBInfo(database, Game(0, target=GPSBase(54.332262, 10.180552))))
+        db.connect()
+
+        return db.select_newest_game()
+
+    def connect(self):
+        self.__con = sqlite3.connect(self.__db_path)
+
     def post_init(self):
         """Initiates DB connection.
 
         This is needed so all threads can initiate their own db connections.
         """
-        self.__con = sqlite3.connect(self.__db_path)
+        self.connect()
         self.me = self.get_my_player_and_game()
         self.flash_all_players()
 
@@ -138,7 +148,7 @@ class Database:
         """
         point_query = """
         SELECT x, y, id, created_at FROM location_data
-        WHERE game_id = 100 AND player_id = ?
+        WHERE game_id = ? AND player_id = ?
         ORDER BY created_at DESC
         LIMIT 10
         """
@@ -147,7 +157,13 @@ class Database:
         active_players = []
 
         for player in db_active_players:
-            locations = cursor.execute(point_query, (str(player[0]),)).fetchall()
+            locations = cursor.execute(
+                point_query,
+                (
+                    self.game.id,
+                    str(player[0]),
+                ),
+            ).fetchall()
             active_players.append(
                 PlayerPoints(
                     id=player[0],

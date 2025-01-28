@@ -17,7 +17,7 @@ def place(point, other_points, target):
     if other_points == []:
         return place
     for other in other_points:
-        if other.distance(target) < distance:
+        if other.distance(target) < distance and point.id != other.id:
             place += 1
 
     return place
@@ -65,8 +65,8 @@ class DBGPS(GPSBase):
     @classmethod
     def create(self):
         return DBGPS(
-            random.uniform(54.27, 54.35),
-            random.uniform(10.1, 10.2),
+            random.uniform(54.330723, 54.329224),
+            random.uniform(10.189832, 10.182837),
             uuid.uuid4(),
             datetime.now(),
         )
