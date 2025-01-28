@@ -2,11 +2,12 @@ import logging
 import socket
 import threading
 import time
-
+import re
+import serial
 import msgspec
 
-from .database import Database, DBInfo
-from .gps import DBGPS, GPSBase, GPSService
+from .database import Database, DBInfo, DBWrapper
+from .gps import DBGPS, GPSBase
 from .helper import get_ip_address, my_ip, sleep_time
 from .payload import Payload
 
@@ -19,12 +20,6 @@ def ping(sock, ip: str, port: int, gps: DBGPS, database):
     sock.sendto(packed, (ip, port))
     logging.debug(f"Send new point {gps} to {ip}:{port}")
     return payload
-
-
-class DBWrapper:
-    def __init__(self, db_info: DBInfo):
-        self.database = Database(db_info)
-        self.exit = False
 
 
 class GPSMockService(threading.Thread, DBWrapper):
@@ -41,6 +36,108 @@ class GPSMockService(threading.Thread, DBWrapper):
             self.database.insert_gps(gps, self.database.me)
             self.database.commit()
             time.sleep(sleep_time)
+
+
+class GPSService(threading.Thread, DBWrapper):
+    def __init__(self, database):
+        DBWrapper.__init__(self, database)
+        self.serial_port = "/dev/ttyUSB3"
+        self.baud_rate = 115200
+
+        threading.Thread.__init__(self)
+
+    def run(self):
+        self.database.post_init()
+        self.startup()
+
+        ser = serial.Serial(port=self.serial_port, baudrate=self.baud_rate, timeout=1)
+        logging.debug(f"Serial port {self.serial_port} opened successfully.")
+        time.sleep(1)
+        while not self.exit:
+            while True:
+                if ser.in_waiting > 0:
+                    response = ser.readline().decode().strip()
+                    if response != "":
+                        (x, y) = self.parse_INF_string(response)
+                        gps = DBGPS.from_parser(x, y)
+                        logging.debug(f"Inserted new Point {gps}")
+                        self.database.insert_gps(gps, self.database.me)
+                        self.database.commit()
+                    break
+
+            time.sleep(5)
+
+    def startup(self):
+        """
+        This function Initializes the serial connection
+        and configures the GNSS device to output the GPS Data.
+        """
+        ser = None
+        try:
+            ser = serial.Serial(
+                port=self.serial_port, baudrate=self.baud_rate, timeout=1
+            )
+            print(f"Serial port {self.serial_port} opened successfully.")
+            time.sleep(1)
+        except serial.SerialException as e:
+            print(f"Error opening serial port: {e}")
+        # else:
+        errorCounter = 0
+        ser.write("AT\r".encode())
+        time.sleep(1)
+        while True:
+            if ser.in_waiting > 0:
+                response = ser.readline().decode().strip()
+                if response == "OK":
+                    print("SIM7000 Online.")
+                    ser.write("AT+CGNSPWR=1\r".encode())
+                    time.sleep(1)
+                    ser.write("AT+CGNSURC=1\r".encode())
+                    time.sleep(1)
+                    print("GNSS activated.")
+                    break
+                elif response == "ERROR" and errorCounter < 5:
+                    print("Something went wrong! Trying Again.")
+                    ser.write("\r\n".encode())
+                    ser.flush()
+                    time.sleep(1)
+                    ser.write("AT\r".encode())
+                    time.sleep(1)
+                    ser.flush()
+                    errorCounter += 1
+                elif errorCounter >= 5:
+                    print("Couldnt resolve. Exiting...")
+                    break
+        # finally:
+        #     if "ser" in locals() and ser.is_open:
+        #         ser.close()
+        #         print("Serial port closed.")
+
+    def parse_INF_string(self, INF_string):
+        """
+        Extract latitude and longitude from the GNSINF string.
+
+        Its build like this:
+        +UGNSINF:
+        <GNSS run status>,<Fix status>,<UTC date & Time>,
+        <Latitude>,<Longitude>,<MSL Altitude>,<Speed Over
+        Ground>,<Course Over Ground>,<Fix
+        Mode>,<Reserved1>,<HDOP>,<PDOP>,<VDOP>,<Reserved2>,
+        <GNSS Satellites in View>,<GNSS Satellites Used>,
+        <GLONASS Satellites Used>,<Reserved3>,<C/N0 max>,
+        <HPA>,<VPA>
+        """
+        match = re.search(
+            r"\+UGNSINF: [^,]*,[^,]*,[^,]*,(\d+\.\d+),(\d+\.\d+)", INF_string
+        )
+        if match:
+            latitude = float(match.group(1))
+            longitude = float(match.group(2))
+            return latitude, longitude
+        else:
+            raise ValueError(
+                f"Coordinates not found in the provided string. Put the Antenna Outdoors, Fool! String {INF_string}"
+            )
 
 
 class PingBackService(threading.Thread):

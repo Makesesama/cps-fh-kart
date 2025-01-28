@@ -16,6 +16,12 @@ class DBInfo(msgspec.Struct):
     game: Game
 
 
+class DBWrapper:
+    def __init__(self, db_info: DBInfo):
+        self.database = Database(db_info)
+        self.exit = False
+
+
 class Database:
     """Homebrew database abstraction.
 
@@ -35,6 +41,7 @@ class Database:
     def for_pre_init(self, database: str, args):
         db = Database(DBInfo(database, Game(0, target=GPSBase(54.332262, 10.180552))))
         db.connect()
+        db.create_tables()
 
         game = db.select_newest_game()
         game_id = 0
