@@ -39,7 +39,7 @@ class Database:
 
     @classmethod
     def for_pre_init(self, database: str, args):
-        db = Database(DBInfo(database, Game(0, target=GPSBase(54.332262, 10.180552))))
+        db = Database(DBInfo(database, Game(0, target=[GPSBase(54.332262, 10.180552)])))
         db.connect()
         db.create_tables()
         db.flash_all_players()
@@ -49,7 +49,13 @@ class Database:
         if game:
             game_id = game.id + 1
 
-        game = Game(game_id, target=GPSBase(args.target_gps_x, args.target_gps_y))
+        game = Game(
+            game_id,
+            target=[
+                GPSBase(args.target_gps_x, args.target_gps_y),
+                GPSBase(args.target_gps_x + 0.001, args.target_gps_y + 0.001),
+            ],
+        )
         db.insert_game(game)
         db.commit()
 
@@ -99,7 +105,7 @@ class Database:
     def create_tables(self):
         """Create tables."""
         queries = [
-            "CREATE TABLE IF NOT EXISTS location_data(id TEXT PRIMARY KEY, x REAL, y REAL, created_at TIMESTAMP, player_id TEXT, game_id INTEGER)",
+            "CREATE TABLE IF NOT EXISTS location_data(id TEXT PRIMARY KEY, x REAL, y REAL, created_at TIMESTAMP, player_id TEXT, game_id INTEGER, is_target BOOLEAN DEFAULT FALSE)",
             "CREATE TABLE IF NOT EXISTS players(id TEXT PRIMARY KEY, active BOOLEAN, me BOOLEAN, address TEXT)",
             "CREATE TABLE IF NOT EXISTS games(id INTEGER PRIMARY KEY, target_x REAL, target_y REAL, created_at TIMESTAMP)",
         ]
@@ -213,39 +219,60 @@ class Database:
     def select_my_newest_point(self) -> DBGPS | None:
         return self.select_newest_point(self.me.id)
 
-    def select_game(self, id) -> Game:
-        cursor = self.__cursor()
-        (game_id, target_x, target_y) = cursor.execute(
-            "SELECT id, target_x, target_y FROM games WHERE id = ?",
-            (id,),
-        ).fetchone()
-        return Game(game_id, target=GPSBase(target_x, target_y))
+    def game_parser(self, rows):
+        return Game(
+            rows[0][0], target=[GPSBase(target[1], target[2]) for target in rows]
+        )
 
-    def select_newest_game(self) -> Game | None:
+    def select_game(self, id) -> Game:
+        query = """
+        SELECT games.id, x, y FROM games
+        JOIN location_data ON games.id = location_data.game_id
+        WHERE games.id = ? AND is_target = TRUE
+        """
         cursor = self.__cursor()
         result = cursor.execute(
-            "SELECT id, target_x, target_y FROM games ORDER BY id DESC LIMIT 1"
-        ).fetchone()
-        if not result:
+            query,
+            (id,),
+        ).fetchall()
+        game = self.game_parser(result)
+        return game
+
+    def select_newest_game(self) -> Game | None:
+        query = """
+        SELECT games.id, x, y FROM games
+        JOIN location_data ON games.id = location_data.game_id
+        WHERE is_target = TRUE
+        ORDER BY games.id DESC LIMIT 1
+        """
+        cursor = self.__cursor()
+        result = cursor.execute(query).fetchall()
+        if len(result) < 1:
             return None
-        (game_id, target_x, target_y) = result
-        return Game(game_id, target=GPSBase(target_x, target_y))
+        return self.game_parser(result)
 
     def insert_game(self, game: Game):
         query = (
             "INSERT INTO games (id, target_x, target_y, created_at) VALUES (?, ?, ?, ?)"
         )
+
+        points_query = """
+        INSERT INTO location_data (id, x, y, created_at, player_id, game_id, is_target) VALUES (?, ?, ?, ?, ?, ?, ?)
+        """
         cursor = self.__cursor()
 
         cursor.execute(
             query,
             (
                 game.id,
+                0,
+                0,
                 datetime.now(),
-                game.target.x,
-                game.target.y,
             ),
         )
+
+        cursor.executemany(points_query, game.target_as_tuples(game.id))
+
         return game
 
     def insert_player(self, player):

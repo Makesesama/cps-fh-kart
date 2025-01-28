@@ -85,7 +85,7 @@ class PlayerMap(QWidget):
         target = self.database.game.target
         self.coordLabel.setText(f"Coordinates: (X: {gps.x}, Y: {gps.y})")
         self.textField.setText(
-            f"Distance to Target: {int(gps.distance(target))}m"
+            f"Distance to Target: {int(gps.distance(target[0]))}m"
         )  # Update new text field
         self.updateMap(gps, target, self.database.select_active_players())
         self.newest = gps
@@ -99,9 +99,10 @@ class PlayerMap(QWidget):
             # Create a Folium map
             folium_map = folium.Map(location=me.points[0].as_list(), zoom_start=16)
 
-            folium.Marker(
-                [target.x, target.y], popup="Target", icon=folium.Icon(color="red")
-            ).add_to(folium_map)
+            for gps in target:
+                folium.Marker(
+                    [gps.x, gps.y], popup="Target", icon=folium.Icon(color="red")
+                ).add_to(folium_map)
 
             player_group = folium.FeatureGroup("Player Group").add_to(folium_map)
             for player in players:
@@ -125,7 +126,7 @@ class PlayerMap(QWidget):
             )
             self.placeField.setText(f"My Place: {my_place}")
 
-            trail_coordinates = [me.points[0].as_list(), target.as_list()]
+            trail_coordinates = [me.points[0].as_list(), target[0].as_list()]
             folium.PolyLine(trail_coordinates, tooltip="Coast").add_to(folium_map)
 
             map_file = f"{local_path}/map.html"
