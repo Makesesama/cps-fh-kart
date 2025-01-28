@@ -1,9 +1,12 @@
 import logging
 from argparse import ArgumentParser
 
+from .database import DBInfo
+from .game import Game
+from .gps import GPSBase
+from .gui import start_gui
 from .helper import get_config_option, get_logging_option
 from .server import KartClient, KartServer
-from .gui import start_gui
 
 
 def main():
@@ -17,7 +20,7 @@ def main():
     UDP_IP = get_config_option("TARGET_HOST")
     UDP_PORT = get_config_option("PORT")
 
-    database = get_config_option("DB_PATH")
+    db_path = get_config_option("DB_PATH")
 
     parser = ArgumentParser(prog="CPSFHKart")
 
@@ -34,6 +37,7 @@ def main():
 
     args = parser.parse_args()
 
+    database = DBInfo(path=db_path, game=Game(0, target=GPSBase(54.1, 10.2)))
     if args.mode == "receive":
         KartServer(UDP_IP, UDP_PORT, database, args)
     elif args.mode == "send":

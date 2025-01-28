@@ -3,10 +3,17 @@ import sqlite3
 import uuid
 from datetime import datetime
 
+import msgspec
+
 from .game import Game
 from .gps import DBGPS, GPSBase
 from .payload import Payload
 from .player import Player, PlayerPoints
+
+
+class DBInfo(msgspec.Struct):
+    path: str
+    game: Game
 
 
 class Database:
@@ -20,8 +27,9 @@ class Database:
     game: Game
     active_players: list[Player] = []
 
-    def __init__(self, database_path: str):
-        self.__db_path = database_path
+    def __init__(self, database: DBInfo):
+        self.__db_path = database.path
+        self.game = database.game
 
     def post_init(self):
         """Initiates DB connection.
@@ -29,7 +37,7 @@ class Database:
         This is needed so all threads can initiate their own db connections.
         """
         self.__con = sqlite3.connect(self.__db_path)
-        (self.me, self.game) = self.get_my_player_and_game()
+        self.me = self.get_my_player_and_game()
         self.flash_all_players()
 
     def __cursor(self):
@@ -55,18 +63,12 @@ class Database:
                 "SELECT id, address, me FROM players WHERE me=TRUE"
             ).fetchone()
 
-        game = self.select_newest_game()
-
-        if game is None:
-            game = self.insert_game(Game(0, target=GPSBase(54.1, 10.2)))
-        else:
-            game = Game(100, target=GPSBase(54.1, 10.2))
         self.commit()
         if db_player is not None:
             (id, address, me) = db_player
-            return (Player(id, address), game)
+            return Player(id, address)
         else:
-            return (self.create_new_player(uuid.uuid4(), "localhost", me=True), game)
+            return self.create_new_player(uuid.uuid4(), "localhost", me=True)
 
     def create_tables(self):
         """Create tables."""
