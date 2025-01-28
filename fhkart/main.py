@@ -41,10 +41,11 @@ def main():
 
     args = parser.parse_args()
 
-    game = Database.for_pre_init(db_path)
+    game = Database.for_pre_init(db_path, args)
+
     database = DBInfo(
         path=db_path,
-        game=Game(game.id + 1, target=GPSBase(args.target_gps_x, args.target_gps_y)),
+        game=game,
     )
     if args.mode == "receive":
         KartServer(UDP_IP, UDP_PORT, database, args)

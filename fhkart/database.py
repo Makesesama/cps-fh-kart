@@ -32,11 +32,20 @@ class Database:
         self.game = database.game
 
     @classmethod
-    def for_pre_init(self, database: str):
+    def for_pre_init(self, database: str, args):
         db = Database(DBInfo(database, Game(0, target=GPSBase(54.332262, 10.180552))))
         db.connect()
 
-        return db.select_newest_game()
+        game = db.select_newest_game()
+        game_id = 0
+        if game:
+            game_id = game.id + 1
+
+        game = Game(game_id, target=GPSBase(args.target_gps_x, args.target_gps_y))
+        db.insert_game(game)
+        db.commit()
+
+        return game
 
     def connect(self):
         self.__con = sqlite3.connect(self.__db_path)
