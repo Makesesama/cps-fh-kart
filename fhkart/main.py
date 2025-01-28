@@ -29,6 +29,8 @@ def main():
         type=str,
     )
     parser.add_argument("--mock", default=False, help="For testing set mock to true")
+    parser.add_argument("--target-gps-x", default=54.1, help="The target", type=float)
+    parser.add_argument("--target-gps-y", default=10.2, help="The target", type=float)
 
     args = parser.parse_args()
 

@@ -130,30 +130,32 @@ class Database:
 
     def select_active_players(self):
         cursor = self.__cursor()
-        query = """
-        SELECT players.id, address, active, me, x, y, location_data.id loc_id, location_data.created_at FROM players
-        JOIN location_data ON location_data.player_id = players.id
-        WHERE active=true AND location_data.game_id = 100
+        player_query = """
+        SELECT id, address, active, me FROM players
+        WHERE active=true
+        """
+        point_query = """
+        SELECT x, y, id, created_at FROM location_data
+        WHERE game_id = 100 AND player_id = ?
+        ORDER BY created_at DESC
         LIMIT 10
         """
-        db_active_players = cursor.execute(query).fetchall()
+        db_active_players = cursor.execute(player_query).fetchall()
 
         active_players = []
+
         for player in db_active_players:
-            id = player[0]
+            locations = cursor.execute(point_query, (str(player[0]),)).fetchall()
             active_players.append(
                 PlayerPoints(
                     id=player[0],
                     address=player[1],
                     active=bool(player[2]),
                     me=bool(player[3]),
-                    points=[
-                        DBGPS(gps[4], gps[5], gps[6], gps[7])
-                        for gps in db_active_players
-                        if gps[0] == id
-                    ],
+                    points=[DBGPS(gps[0], gps[1], gps[2], gps[3]) for gps in locations],
                 )
             )
+
         self.active_players = active_players
         return active_players
 

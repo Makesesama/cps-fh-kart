@@ -7,12 +7,13 @@ import time
 import folium
 import serial
 from PyQt5.QtCore import QTimer, QUrl
-from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineSettings
+from PyQt5.QtWebEngineWidgets import QWebEngineSettings, QWebEngineView
 from PyQt5.QtWidgets import QApplication, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
+from .gps import place
 from .database import Database
 from .helper import local_path
-from .player import Player
+from .player import Player, PlayerPoints
 from .server import KartClient, KartServer
 from .web import WebService
 
@@ -46,6 +47,9 @@ class PlayerMap(QWidget):
         # Text field to update
         self.textField = QLabel("")  # New text field
         leftLayout.addWidget(self.textField)
+
+        self.placeField = QLabel("")  # New text field
+        leftLayout.addWidget(self.placeField)
 
         # Folium map display
         self.map_view = QWebEngineView()
@@ -81,10 +85,10 @@ class PlayerMap(QWidget):
         self.textField.setText(
             f"Distance to Target: {int(gps.distance(target))}m"
         )  # Update new text field
-        self.updateMap(gps, target, self.database.active_players)
+        self.updateMap(gps, target, self.database.select_active_players())
         self.newest = gps
 
-    def updateMap(self, gps, target, players: list[Player] = []):
+    def updateMap(self, gps, target, players: list[PlayerPoints] = []):
         # Create a Folium map
         folium_map = folium.Map(location=[gps.x, gps.y], zoom_start=30)
 
@@ -96,8 +100,11 @@ class PlayerMap(QWidget):
 
         player_group = folium.FeatureGroup("Player Group").add_to(folium_map)
         for player in players:
-            points = player.newest_point(self.database)
+            points = player.points[0]
             folium.Marker(points.as_list(), popup=str(player.id)).add_to(player_group)
+
+        my_place = place(gps, [player.points[0] for player in players], target)
+        self.placeField.setText(f"My Place: {my_place}")
 
         trail_coordinates = [gps.as_list(), target.as_list()]
         folium.PolyLine(trail_coordinates, tooltip="Coast").add_to(folium_map)
