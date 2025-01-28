@@ -42,6 +42,7 @@ class Database:
         db = Database(DBInfo(database, Game(0, target=GPSBase(54.332262, 10.180552))))
         db.connect()
         db.create_tables()
+        db.flash_all_players()
 
         game = db.select_newest_game()
         game_id = 0
@@ -64,7 +65,6 @@ class Database:
         """
         self.connect()
         self.me = self.get_my_player_and_game()
-        self.flash_all_players()
 
     def __cursor(self):
         return self.__con.cursor()
