@@ -97,7 +97,7 @@ class PlayerMap(QWidget):
             print(me.points)
 
             # Create a Folium map
-            folium_map = folium.Map(location=me.points[0].as_list(), zoom_start=30)
+            folium_map = folium.Map(location=me.points[0].as_list(), zoom_start=16)
 
             folium.Marker(
                 [target.x, target.y], popup="Target", icon=folium.Icon(color="red")
@@ -105,7 +105,10 @@ class PlayerMap(QWidget):
 
             player_group = folium.FeatureGroup("Player Group").add_to(folium_map)
             for player in players:
-                points = player.points[0]
+                if len(player.points) > 0:
+                    points = player.points[0]
+                else:
+                    continue
                 if player.me:
                     folium.Marker(points.as_list(), popup="Current Location").add_to(
                         player_group
@@ -116,7 +119,9 @@ class PlayerMap(QWidget):
                     )
 
             my_place = place(
-                me.points[0], [player.points[0] for player in players], target
+                me.points[0],
+                [player.points[0] for player in players if len(player.points) > 0],
+                target,
             )
             self.placeField.setText(f"My Place: {my_place}")
 

@@ -54,16 +54,19 @@ class GPSService(threading.Thread, DBWrapper):
         logging.debug(f"Serial port {self.serial_port} opened successfully.")
         time.sleep(1)
         while not self.exit:
-            while True:
-                if ser.in_waiting > 0:
-                    response = ser.readline().decode().strip()
-                    if response != "":
-                        (x, y) = self.parse_INF_string(response)
-                        gps = DBGPS.from_parser(x, y)
-                        logging.debug(f"Inserted new Point {gps}")
-                        self.database.insert_gps(gps, self.database.me)
-                        self.database.commit()
-                    break
+            try:
+                while True:
+                    if ser.in_waiting > 0:
+                        response = ser.readline().decode().strip()
+                        if response != "":
+                            (x, y) = self.parse_INF_string(response)
+                            gps = DBGPS.from_parser(x, y)
+                            logging.debug(f"Inserted new Point {gps}")
+                            self.database.insert_gps(gps, self.database.me)
+                            self.database.commit()
+                        break
+            except:
+                continue
 
             time.sleep(5)
 
