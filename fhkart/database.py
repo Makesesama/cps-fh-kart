@@ -6,7 +6,7 @@ from datetime import datetime
 import msgspec
 
 from .game import Game
-from .gps import DBGPS, GPSBase
+from .gps import DBGPS, GPSBase, Track
 from .payload import Payload
 from .player import Player, PlayerPoints
 
@@ -14,6 +14,7 @@ from .player import Player, PlayerPoints
 class DBInfo(msgspec.Struct):
     path: str
     game: Game
+    track: Track
 
 
 class DBWrapper:
@@ -31,15 +32,23 @@ class Database:
     __db_path: str
     me: Player
     game: Game
+    track: Track
     active_players: list[Player] = []
 
     def __init__(self, database: DBInfo):
         self.__db_path = database.path
         self.game = database.game
+        self.track = database.track
 
     @classmethod
     def for_pre_init(self, database: str, args):
-        db = Database(DBInfo(database, Game(0, target=[GPSBase(54.332262, 10.180552)])))
+        db = Database(
+            DBInfo(
+                database,
+                Game(0, target=[GPSBase(54.332262, 10.180552)]),
+                Track(args.track_path),
+            )
+        )
         db.connect()
         db.create_tables()
         db.flash_all_players()
@@ -49,17 +58,17 @@ class Database:
         if game:
             game_id = game.id + 1
 
-        game = Game(
-            game_id,
-            target=[
-                GPSBase(args.target_gps_x, args.target_gps_y),
-                GPSBase(args.target_gps_x + 0.001, args.target_gps_y + 0.001),
-            ],
-        )
+        track = Track(args.track_path)
+
+        # [
+        #     GPSBase(args.target_gps_x, args.target_gps_y),
+        #     GPSBase(args.target_gps_x + 0.001, args.target_gps_y + 0.001),
+        # ],
+        game = Game(game_id, target=track.gps_data)
         db.insert_game(game)
         db.commit()
 
-        return game
+        return game, track
 
     def connect(self):
         self.__con = sqlite3.connect(self.__db_path)

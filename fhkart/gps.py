@@ -4,6 +4,7 @@ import random
 import threading
 import time
 import uuid
+import gpxpy
 from datetime import datetime
 
 import msgspec
@@ -63,8 +64,8 @@ class DBGPS(GPSBase):
     @classmethod
     def create(self):
         return DBGPS(
-            random.uniform(54.330723, 54.329224),
-            random.uniform(10.189832, 10.182837),
+            random.uniform(54.3307840521, 54.3305306819),
+            random.uniform(10.179542899, 10.1799345015),
             uuid.uuid4(),
             datetime.now(),
         )
@@ -77,3 +78,102 @@ class DBGPS(GPSBase):
             uuid.uuid4(),
             datetime.now(),
         )
+
+
+class Track:
+    """
+    class for handling gpx files and race track progression,
+    returns when the player is done
+    """
+
+    gps_data: list[GPSBase] = []
+
+    start_pos = None, None
+    current_pos = None, None  # maybe pass this one as arg to the functions?
+    target_pos = None, None
+    current_lap = 1
+    lap_goal = 3
+    index = 1
+
+    def __init__(self, filepath: str):
+        # try:
+        with open(filepath, "r") as gpx_file:
+            gpx = gpxpy.parse(gpx_file)
+            if gpx_file.read() == None:
+                raise Exception("File is empty")
+
+            for track in gpx.tracks:
+                for segment in track.segments:
+                    for point in segment.points:
+                        self.gps_data.append(GPSBase(point.latitude, point.longitude))
+
+            self.start_pos = self.gps_data[0]
+            self.target_pos = self.gps_data[1]
+
+            if (
+                self.start_pos is not self.gps_data[-1] and self.lap_goal > 1
+            ):  # if last point isnt first point  add it
+                self.gps_data.append(
+                    self.start_pos
+                )  # and more than one lap is required,
+
+            elif (
+                self.start_pos is not self.gps_data[-1] and self.lap_goal == 1
+            ):  # if last point is not first point and only
+                self.start_pos = (self.gps_data[-1],)
+
+                # to ensure check_if_next works
+            # except Exception as e:
+
+    def update_current_pos(self, gps):
+        self.current_pos = gps
+
+    def check_if_next_one(self):
+        """
+        checks if the player already reached the next targtet
+        and updates it automaticially, counts up lap if necessary
+        calls win event if the player is done
+        """
+        if self.approximate_if_near:
+            if self.target_pos == self.start_pos:
+                self.current_lap += 1
+                self.index = 1
+                if self.current_lap > self.lap_goal:
+                    self.sendWinImpulse()
+            else:
+                self.index += 1
+
+            self.target_pos = self.gps_data[self.index]
+
+    def sendWinImpulse():
+        pass  # end game, function call / event?
+
+    def approximate_if_near(self):
+        quotient_lat = abs(1 - abs(self.current_pos.x / self.target_pos.x))
+        quotient_long = abs(1 - abs(self.current_pos.y / self.target_pos.y))
+        if (
+            quotient_lat < 0.0001 and quotient_long < 0.00000000001
+        ):  # less than 0.000000001% inaccuracy, seems fine maybe x10 more
+            return True
+        else:
+            return False
+
+
+if __name__ == "__main__":
+    handler = gpx_handler()
+    print(handler.index)
+    handler.update_current_pos(GPSBase(50.3370770462, 6.94988250732))
+    print(
+        "start pos: ",
+        handler.start_pos,
+        " current pos: ",
+        handler.current_pos,
+        " target pos: ",
+        handler.target_pos,
+    )
+    if handler.approximate_if_near() == True:
+        print("is Near")
+    else:
+        print("isnt Near")
+    handler.check_if_next_one()
+    print(handler.index)

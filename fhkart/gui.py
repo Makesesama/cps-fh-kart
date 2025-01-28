@@ -97,7 +97,7 @@ class PlayerMap(QWidget):
             print(me.points)
 
             # Create a Folium map
-            folium_map = folium.Map(location=me.points[0].as_list(), zoom_start=16)
+            folium_map = folium.Map(location=me.points[0].as_list(), zoom_start=18)
 
             for gps in target:
                 folium.Marker(
@@ -122,7 +122,7 @@ class PlayerMap(QWidget):
             my_place = place(
                 me.points[0],
                 [player.points[0] for player in players if len(player.points) > 0],
-                target,
+                target[0],
             )
             self.placeField.setText(f"My Place: {my_place}")
 

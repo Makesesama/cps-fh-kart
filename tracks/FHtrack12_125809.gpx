@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<gpx xmlns="http://www.topografix.com/GPX/1/1" version="1.1" creator="greif.de" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+<metadata>
+<name>Greif 125809</name>
+<bounds maxlat="54.3308059482" maxlon="10.1799452304" minlat="54.3305306819" minlon="10.1795321702"/>
+</metadata>
+<trk>
+<name>Greif 125809</name>
+<trkseg>
+<trkpt lat="54.3307840521" lon="10.1799452304">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.3307903081" lon="10.1798218488">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.3308059482" lon="10.1796394585">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.3307527719" lon="10.1795697211">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.3306683153" lon="10.179542899">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.3305994986" lon="10.1795321702">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.3305525781" lon="10.179542899">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.3305557061" lon="10.1796394585">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.3305306819" lon="10.179773569">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.3305306819" lon="10.1798433064">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.3305807304" lon="10.1798808574">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.330640163" lon="10.179902315">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.3306995955" lon="10.1799237727">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.330762156" lon="10.1799345015">
+<ele>0</ele>
+</trkpt>
+</trkseg>
+</trk>
+</gpx>

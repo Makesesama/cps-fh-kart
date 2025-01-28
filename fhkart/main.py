@@ -39,14 +39,13 @@ def main():
         "--target-gps-y", default=10.180552, help="The target", type=float
     )
 
+    parser.add_argument("--track-path", default="./tracks/FHtrack12_125809.gpx")
+
     args = parser.parse_args()
 
-    game = Database.for_pre_init(db_path, args)
+    (game, track) = Database.for_pre_init(db_path, args)
 
-    database = DBInfo(
-        path=db_path,
-        game=game,
-    )
+    database = DBInfo(path=db_path, game=game, track=track)
     if args.mode == "receive":
         KartServer(UDP_IP, UDP_PORT, database, args)
     elif args.mode == "send":

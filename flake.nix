@@ -30,6 +30,8 @@
           pyqtwebengine
           folium
 
+          gpxpy
+
           pipx
         ];
     in

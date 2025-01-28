@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<gpx xmlns="http://www.topografix.com/GPX/1/1" version="1.1" creator="greif.de" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+<metadata>
+<name>Greif 125810</name>
+<bounds maxlat="54.3333927363" maxlon="10.1814365386" minlat="54.3328109578" minlon="10.1805889605"/>
+</metadata>
+<trk>
+<name>Greif 125810</name>
+<trkseg>
+<trkpt lat="54.3328547478" lon="10.1809322833">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.332873515" lon="10.1807713508">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.3328922821" lon="10.1806426047">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.3329392" lon="10.1805889605">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.3330048849" lon="10.180621147">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.3331143594" lon="10.1806694268">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.3332050667" lon="10.1806962489">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.3332989016" lon="10.1807445287">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.3333927363" lon="10.1807767152">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.3333739694" lon="10.1809108256">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.3333489468" lon="10.1810663937">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.3333333077" lon="10.1812058686">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.3333176686" lon="10.1813507079">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.3332989016" lon="10.1814365386">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.333236345" lon="10.1814150809">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.3331769162" lon="10.18137753">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.3330987202" lon="10.1813507079">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.3330205241" lon="10.1813292502">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.3329141771" lon="10.1812863349">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.3328359807" lon="10.1812541484">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.3328109578" lon="10.1811790465">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.3328265971" lon="10.1810717582">
+<ele>0</ele>
+</trkpt>
+<trkpt lat="54.3328422364" lon="10.1809859275">
+<ele>0</ele>
+</trkpt>
+</trkseg>
+</trk>
+</gpx>
