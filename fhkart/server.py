@@ -14,12 +14,15 @@ from .payload import Payload
 
 def ping(sock, ip: str, port: int, gps: DBGPS, database):
     """Sends a payload to a socket."""
-    payload = Payload(database.me, gps)
-    # database.insert_payload(payload)
-    packed = msgspec.msgpack.encode(payload)
-    sock.sendto(packed, (ip, port))
-    logging.debug(f"Send new point {gps} to {ip}:{port}")
-    return payload
+    try:
+        payload = Payload(database.me, gps)
+        # database.insert_payload(payload)
+        packed = msgspec.msgpack.encode(payload)
+        sock.sendto(packed, (ip, port))
+        logging.debug(f"Send new point {gps} to {ip}:{port}")
+        return payload
+    except ValueError:
+        pass
 
 
 class GPSMockService(threading.Thread, DBWrapper):
