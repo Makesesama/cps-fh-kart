@@ -68,6 +68,8 @@ class PlayerMap(QWidget):
         if self.newest:
             self.updateMap(self.newest, self.database.game.target)
 
+        self.showFullScreen()
+
     def updateCoordinates(self):
         logging.debug("Updating Coords")
 
