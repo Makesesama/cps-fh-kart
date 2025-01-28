@@ -8,3 +8,7 @@ class Payload(msgspec.Struct):
 
     player: Player
     gps: DBGPS
+
+    def __post_init__(self):
+        if not self.gps:
+            raise ValueError("Gps has to be of type gps")
