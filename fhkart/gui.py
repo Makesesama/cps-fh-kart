@@ -106,9 +106,11 @@ class PlayerMap(QWidget):
 
             player_group = folium.FeatureGroup("Player Group").add_to(folium_map)
             for player in players:
+                points = None
                 if len(player.points) > 0:
                     points = player.points[0]
                 else:
+                    print(f"Player points could not be updated {player}")
                     continue
                 if player.me:
                     folium.Marker(points.as_list(), popup="Current Location").add_to(
