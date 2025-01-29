@@ -39,7 +39,7 @@ def main():
         "--target-gps-y", default=10.180552, help="The target", type=float
     )
 
-    parser.add_argument("--track-path", default="./tracks/FHtrack12_125809.gpx")
+    parser.add_argument("--track-path", default="./tracks/praesi_track.gpx")
 
     args = parser.parse_args()
 
