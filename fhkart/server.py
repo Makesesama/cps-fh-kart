@@ -64,7 +64,7 @@ class GPSService(threading.Thread, DBWrapper):
                         if response != "":
                             (x, y) = self.parse_INF_string(response)
                             gps = DBGPS.from_parser(x, y)
-                            logging.debug(f"Inserted new Point {gps}")
+                            logging.debug(f"Inserted new Point {x} {y}")
                             self.database.insert_gps(gps, self.database.me)
                             self.database.commit()
                         break

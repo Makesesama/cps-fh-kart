@@ -90,6 +90,9 @@ class PlayerMap(QWidget):
         self.updateMap(target, players)
 
     def updateMap(self, target, players: list[PlayerPoints] = []):
+        for player in players:
+            logging.debug(f"{player.id} has {len(player.points)} points")
+
         pick_me = [player for player in players if player.me]
         if len(pick_me) > 0:
             me = pick_me[0]
@@ -99,10 +102,11 @@ class PlayerMap(QWidget):
             # Create a Folium map
             folium_map = folium.Map(location=me.points[0].as_list(), zoom_start=18)
 
+            target_group = folium.FeatureGroup("Target Group").add_to(folium_map)
             for gps in target:
                 folium.Marker(
                     [gps.x, gps.y], popup="Target", icon=folium.Icon(color="red")
-                ).add_to(folium_map)
+                ).add_to(target_group)
 
             player_group = folium.FeatureGroup("Player Group").add_to(folium_map)
             for player in players:
@@ -129,7 +133,7 @@ class PlayerMap(QWidget):
             self.placeField.setText(f"My Place: {my_place}")
 
             trail_coordinates = [me.points[0].as_list(), target[0].as_list()]
-            folium.PolyLine(trail_coordinates, tooltip="Coast").add_to(folium_map)
+            folium.PolyLine(trail_coordinates, tooltip="Target line").add_to(folium_map)
 
             map_file = f"{local_path}/map.html"
             folium_map.save(map_file)
