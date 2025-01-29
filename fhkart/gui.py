@@ -93,8 +93,9 @@ class PlayerMap(QWidget):
         pick_me = [player for player in players if player.me]
         if len(pick_me) > 0:
             me = pick_me[0]
-            print(me.points)
 
+            if len(me.points) < 1:
+                return
             # Create a Folium map
             folium_map = folium.Map(location=me.points[0].as_list(), zoom_start=18)
 
