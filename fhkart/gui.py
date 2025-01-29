@@ -74,23 +74,20 @@ class PlayerMap(QWidget):
         logging.debug("Updating Coords")
 
         gps = self.database.select_my_newest_point()
-        if gps:
-            if self.newest:
-                if self.newest.id != gps.id:
-                    self._set_coordlabel_and_newest(gps)
-            else:
-                self._set_coordlabel_and_newest(gps)
+        self._set_coordlabel_and_newest()
 
-    def _set_coordlabel_and_newest(self, gps):
+    def _set_coordlabel_and_newest(self):
+        players = self.database.select_active_players()
+        me = self.database.select_my_newest_point()
         target = self.database.game.target
-        self.coordLabel.setText(f"Coordinates: (X: {gps.x}, Y: {gps.y})")
+        self.coordLabel.setText(f"Coordinates: (X: {me.x}, Y: {me.y})")
         self.textField.setText(
-            f"Distance to Target: {int(gps.distance(target[0]))}m"
+            f"Distance to Target: {int(me.distance(target[0]))}m"
         )  # Update new text field
-        self.updateMap(gps, target, self.database.select_active_players())
-        self.newest = gps
+        self.newest = me
+        self.updateMap(target, players)
 
-    def updateMap(self, gps, target, players: list[PlayerPoints] = []):
+    def updateMap(self, target, players: list[PlayerPoints] = []):
         pick_me = [player for player in players if player.me]
         if len(pick_me) > 0:
             me = pick_me[0]
