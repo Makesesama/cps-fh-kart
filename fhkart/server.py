@@ -59,15 +59,24 @@ class GPSService(threading.Thread, DBWrapper):
         while not self.exit:
             try:
                 while True:
-                    if ser.in_waiting > 0:
-                        response = ser.readline().decode().strip()
-                        if response != "":
-                            (x, y) = self.parse_INF_string(response)
-                            gps = DBGPS.from_parser(x, y)
-                            logging.debug(f"Inserted new Point {x} {y}")
-                            self.database.insert_gps(gps, self.database.me)
-                            self.database.commit()
-                        break
+                    bytesToRead = ser.inWaiting()
+                    response = ser.read(bytesToRead).decode().strip()
+                    if len(response) > 0:
+                        print(response)
+                        (x, y) = self.parse_INF_string(response)
+                        gps = DBGPS.from_parser(x, y)
+                        logging.debug(f"Inserted new Point {gps}")
+                        self.database.insert_gps(gps, self.database.me)
+                        self.database.commit()
+                    # if ser.in_waiting > 0:
+                    #     response = ser.readline().decode().strip()
+                    #     if response != "":
+                    #         (x, y) = self.parse_INF_string(response)
+                    #         gps = DBGPS.from_parser(x, y)
+                    #         logging.debug(f"Inserted new Point {x} {y}")
+                    #         self.database.insert_gps(gps, self.database.me)
+                    #         self.database.commit()
+                    # break
             except:
                 continue
 
