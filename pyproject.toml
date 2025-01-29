@@ -1,7 +1,6 @@
 [build-system]
 requires = ["setuptools >= 61.0"]
 build-backend = "setuptools.build_meta"
-
 [project]
 name = "cps-fh-kart"
 version = "2020.0.0"
@@ -17,24 +16,7 @@ dependencies = [
 requires-python = ">=3.12"
 authors = [
   {name = "Maximilian Ruhm", email = "maximilian@ruhm.info"},
-  {name = "Arne Iskra", email = "arne@iskra.com"},
+  {name = "Arne Iskra", email = "arne.iskra@gmx.com"},
 ]
 description = "CPS Project to race with Bikes"
 readme = "README.md"
-
-[project.optional-dependencies]
-gui = ["PyQt5"]
-cli = [
-  "rich",
-  "click",
-]
-
-[project.urls]
-Homepage = "https://example.com"
-Documentation = "https://readthedocs.org"
-Repository = "https://github.com/me/spam.git"
-"Bug Tracker" = "https://github.com/me/spam/issues"
-Changelog = "https://github.com/me/spam/blob/master/CHANGELOG.md"
-
-[project.scripts]
-fhkart = "fhkart:main"
