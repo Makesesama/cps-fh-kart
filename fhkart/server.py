@@ -62,31 +62,19 @@ class GPSService(threading.Thread, DBWrapper):
                     bytesToRead = ser.inWaiting()
                     response = ser.read(bytesToRead).decode().strip()
                     if len(response) > 0:
-                        print(response)
                         (x, y) = self.parse_INF_string(response)
                         gps = DBGPS.from_parser(x, y)
                         logging.debug(f"Inserted new Point {gps}")
                         self.database.insert_gps(gps, self.database.me)
                         self.database.commit()
-                    # if ser.in_waiting > 0:
-                    #     response = ser.readline().decode().strip()
-                    #     if response != "":
-                    #         (x, y) = self.parse_INF_string(response)
-                    #         gps = DBGPS.from_parser(x, y)
-                    #         logging.debug(f"Inserted new Point {x} {y}")
-                    #         self.database.insert_gps(gps, self.database.me)
-                    #         self.database.commit()
-                    # break
+
             except:
                 continue
 
             time.sleep(5)
 
     def startup(self):
-        """
-        This function Initializes the serial connection
-        and configures the GNSS device to output the GPS Data.
-        """
+        """Initializes serial connection with gps module."""
         ser = None
         try:
             ser = serial.Serial(
@@ -96,7 +84,7 @@ class GPSService(threading.Thread, DBWrapper):
             time.sleep(1)
         except serial.SerialException as e:
             print(f"Error opening serial port: {e}")
-        # else:
+
         errorCounter = 0
         ser.write("AT\r".encode())
         time.sleep(1)
@@ -104,15 +92,15 @@ class GPSService(threading.Thread, DBWrapper):
             if ser.in_waiting > 0:
                 response = ser.readline().decode().strip()
                 if response == "OK":
-                    print("SIM7000 Online.")
+                    logging.info("SIM7000 Online.")
                     ser.write("AT+CGNSPWR=1\r".encode())
                     time.sleep(1)
                     ser.write("AT+CGNSURC=1\r".encode())
                     time.sleep(1)
-                    print("GNSS activated.")
+                    logging.info("GNSS activated.")
                     break
                 elif response == "ERROR" and errorCounter < 5:
-                    print("Something went wrong! Trying Again.")
+                    logging.error("Something went wrong! Trying Again.")
                     ser.write("\r\n".encode())
                     ser.flush()
                     time.sleep(1)
@@ -121,12 +109,8 @@ class GPSService(threading.Thread, DBWrapper):
                     ser.flush()
                     errorCounter += 1
                 elif errorCounter >= 5:
-                    print("Couldnt resolve. Exiting...")
+                    logging.error("Couldnt resolve. Exiting...")
                     break
-        # finally:
-        #     if "ser" in locals() and ser.is_open:
-        #         ser.close()
-        #         print("Serial port closed.")
 
     def parse_INF_string(self, INF_string):
         """
@@ -155,7 +139,7 @@ class GPSService(threading.Thread, DBWrapper):
             )
 
 
-class PingBackService(threading.Thread):
+class PingBackService(threading.Thread, DBWrapper):
     def __init__(self, database, port):
         DBWrapper.__init__(self, database)
         self.port = port
@@ -184,7 +168,7 @@ class PingBackService(threading.Thread):
             time.sleep(sleep_time)
 
 
-class SenderService(threading.Thread):
+class SenderService(threading.Thread, DBWrapper):
     def __init__(self, database, ip: str, port: int):
         DBWrapper.__init__(self, database)
         self.ip = ip
@@ -207,7 +191,7 @@ class SenderService(threading.Thread):
             time.sleep(sleep_time)
 
 
-class ReceiverService(threading.Thread):
+class ReceiverService(threading.Thread, DBWrapper):
     def __init__(self, database, ip: str, port: int):
         DBWrapper.__init__(self, database)
         self.ip = ip

@@ -63,10 +63,10 @@ class PlayerMap(QWidget):
         self.setGeometry(100, 100, 800, 600)
         self.show()
 
-        self.newest = self.database.select_my_newest_point()
+        self.newest = self.database.select_active_players()
         # Initial map display
         if self.newest:
-            self.updateMap(self.newest, self.database.game.target)
+            self.updateMap(self.database.game.target, self.newest)
 
         self.showFullScreen()
 
