@@ -88,12 +88,12 @@ class Track:
 
     gps_data: list[GPSBase] = []
 
-    start_pos = None, None
-    current_pos = None, None  # maybe pass this one as arg to the functions?
-    target_pos = None, None
+    start_pos: GPSBase
+    current_pos: GPSBase  # maybe pass this one as arg to the functions?
+    target_pos: GPSBase
     current_lap = 1
     lap_goal = 3
-    index = 1
+    index = 0
 
     def __init__(self, filepath: str):
         # try:

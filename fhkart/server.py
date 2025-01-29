@@ -1,11 +1,13 @@
 import logging
+import re
 import socket
 import threading
 import time
-import re
-import serial
-import msgspec
 
+import msgspec
+import serial
+
+from .breaks import Breakdancer
 from .database import Database, DBInfo, DBWrapper
 from .gps import DBGPS, GPSBase
 from .helper import get_ip_address, my_ip, sleep_time
@@ -173,7 +175,7 @@ class SenderService(threading.Thread, DBWrapper):
         DBWrapper.__init__(self, database)
         self.ip = ip
         self.port = port
-
+        self.breaker = Breakdancer()
         threading.Thread.__init__(self)
 
     def run(self):
@@ -187,6 +189,11 @@ class SenderService(threading.Thread, DBWrapper):
         while not self.exit:
             gps = self.database.select_my_newest_point()
             ping(sock, self.ip, self.port, gps, self.database)
+
+            try:
+                self.breaker.luckyStrike()
+            except:
+                pass
 
             time.sleep(sleep_time)
 

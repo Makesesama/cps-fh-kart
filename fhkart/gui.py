@@ -87,11 +87,12 @@ class PlayerMap(QWidget):
                 f"Distance to Target: {int(me.distance(target[0]))}m"
             )  # Update new text field
             self.newest = me
+
         self.updateMap(target, players)
 
     def updateMap(self, target, players: list[PlayerPoints] = []):
-        for player in players:
-            logging.debug(f"{player.id} has {len(player.points)} points")
+        # for player in players:
+        #     logging.debug(f"{player.id} has {len(player.points)} points")
 
         pick_me = [player for player in players if player.me]
         if len(pick_me) > 0:
@@ -111,12 +112,14 @@ class PlayerMap(QWidget):
             player_group = folium.FeatureGroup("Player Group").add_to(folium_map)
             for player in players:
                 points = None
+
                 if len(player.points) > 0:
                     points = player.points[0]
                 else:
                     print(f"Player points could not be updated {player}")
                     continue
                 if player.me:
+                    self.check_player_next_target(player, target)
                     folium.Marker(points.as_list(), popup="Current Location").add_to(
                         player_group
                     )
@@ -128,7 +131,7 @@ class PlayerMap(QWidget):
             my_place = place(
                 me.points[0],
                 [player.points[0] for player in players if len(player.points) > 0],
-                target[0],
+                target[self.database.track.index],
             )
             self.placeField.setText(f"My Place: {my_place}")
 
@@ -143,6 +146,10 @@ class PlayerMap(QWidget):
                 QWebEngineSettings.LocalContentCanAccessRemoteUrls, True
             )
             self.map_view.load(html_map)
+
+    def check_player_next_target(self, player, targets):
+        if player.points[0].distance(targets[self.database.track.index]) < 2:
+            self.database.track.index += 1
 
 
 def start_gui(database, ip, port, args):

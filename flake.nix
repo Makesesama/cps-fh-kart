@@ -31,6 +31,7 @@
           folium
 
           gpxpy
+          gpiozero
 
           pipx
         ];
