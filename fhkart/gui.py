@@ -80,11 +80,13 @@ class PlayerMap(QWidget):
         players = self.database.select_active_players()
         me = self.database.select_my_newest_point()
         target = self.database.game.target
-        self.coordLabel.setText(f"Coordinates: (X: {me.x}, Y: {me.y})")
-        self.textField.setText(
-            f"Distance to Target: {int(me.distance(target[0]))}m"
-        )  # Update new text field
-        self.newest = me
+
+        if me:
+            self.coordLabel.setText(f"Coordinates: (X: {me.x}, Y: {me.y})")
+            self.textField.setText(
+                f"Distance to Target: {int(me.distance(target[0]))}m"
+            )  # Update new text field
+            self.newest = me
         self.updateMap(target, players)
 
     def updateMap(self, target, players: list[PlayerPoints] = []):
