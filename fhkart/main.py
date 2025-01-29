@@ -47,9 +47,9 @@ def main():
 
     database = DBInfo(path=db_path, game=game, track=track)
     if args.mode == "receive":
-        KartServer(UDP_IP, UDP_PORT, database, args)
+        KartServer(args.target, UDP_PORT, database, args)
     elif args.mode == "send":
-        KartClient(UDP_IP, UDP_PORT, database, args)
+        KartClient(args.target, UDP_PORT, database, args)
     elif args.mode == "gui":
         start_gui(database, args.target, UDP_PORT, args)
 
